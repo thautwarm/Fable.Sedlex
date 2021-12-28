@@ -280,7 +280,7 @@ let pseq xs =
     | p::p1 ->
         List.fold (fun r p -> seq r p) p p1
   _pseq (List.ofArray xs)
-  
+
 let pstar x = rep x
 let pplus x = plus x
 let prep p0 i1 i2 =
@@ -548,7 +548,7 @@ let with_tokenizer lexer' lexbuf =
     (token, start_p, curr_p)
   in lexer
 
-type token = { 
+type token = {
     token_id: token_id;
     lexeme : string ;
     line: int;
@@ -623,7 +623,7 @@ type InlineThreadCodeGenerator(cu: compiled_unit) =
             | Some Discard -> None
             | Some (Tokenize token_id) ->
                 let line, col, span = get_position buf
-                Some { token_id = token_id ; 
+                Some { token_id = token_id ;
                        lexeme = lexeme buf;
                        line = line;
                        col = col;

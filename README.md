@@ -1,6 +1,4 @@
-NOTE: Currently we only have an interpreted mode, and this already satisfies my use case as I'm using PyPy and there is no performance penalty.
-
-It's EASY to compile `compiled_unit`(see `compile_inline_thread` for how to write a custom backend) into source code for Python, F\# and others.
+NOTE: currently we only have an interpreted mode. It's EASY to compile `compiled_unit`(see `compile_inline_thread` for how to write a custom backend) into source code for Python, F\# and others.
 
 ## Fable.Sedlex
 
@@ -8,11 +6,11 @@ Thanks to the [Fable.Python](https://github.com/fable-compiler/Fable.Python) com
 
 The most impressive feature of `sedlex` is that Sedlex statically analyses regular expressions built with lexer combinators, correctly ordering/merging/optimizing the lexical rules. **In short, `sedlex` is correct and efficient.**
 
-**For Python users**: The generated Python code is located in `fable_sedlex`, and you can copy them to directly access such lexer generator in Python. 
+**For Python users**: the generated Python code is located in `fable_sedlex` directory, and you can directly copy them to your Python package to access such lexer generator. 
 
-**For .NET(C\#, F\#) users**: Copying `Sedlex.fs` will give you such lexer generator in .NET.
+**For .NET(C\#, F\#) users**: copying `Sedlex.fs` will give you such lexer generator in .NET.
 
-**For users in other programming languages**: You might access `compiled_unit` and write a code generator.
+**For users in other programming languages**: you might access `compiled_unit` and write a code generator.
 
 ```python
 from fable_sedlex.sedlex import *
