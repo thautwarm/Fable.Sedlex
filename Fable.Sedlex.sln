@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fable.Sedlex", "Fable.Sedlex.fsproj", "{8C35D6E5-CA61-47C6-B9C0-4320B7FF40F1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8C35D6E5-CA61-47C6-B9C0-4320B7FF40F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C35D6E5-CA61-47C6-B9C0-4320B7FF40F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C35D6E5-CA61-47C6-B9C0-4320B7FF40F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C35D6E5-CA61-47C6-B9C0-4320B7FF40F1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
