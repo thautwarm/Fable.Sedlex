@@ -42,3 +42,11 @@ while True:
     tokens.append(x)
 
 print(tokens)
+
+from fable_sedlex.code_gen import *
+
+# vsep(
+#     [
+#         word("def")
+#         word("123")
+#     ])

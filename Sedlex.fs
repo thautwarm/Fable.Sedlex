@@ -1,5 +1,6 @@
-﻿// https://github.com/ocaml-community/sedlex/blob/master/src/syntax/sedlex.ml
-module Fable.Sedlex
+﻿module Fable.Sedlex.Compiler
+// https://github.com/ocaml-community/sedlex/blob/master/src/syntax/sedlex.ml
+
 
 let incr (a: int ref) = a.Value <- a.Value + 1
 
