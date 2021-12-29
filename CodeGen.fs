@@ -17,8 +17,6 @@ type Doc =
      
      static member ( * ) (a, b) = Concat(a, b)
      static member (+) (a, b) = a * Word " " * b
-
-     static member (<<<) (a, b) = Indent(-b, a)
      static member (>>>) (a, b) = Indent(b, a)
 
 
@@ -53,7 +51,7 @@ let rec compileToPrims : Doc -> DocPrimitive array array = fun doc ->
         if Array.isEmpty it then it
         else
         it.[0] <- Array.append [|DP_PushCurrentIndent|] it.[0]
-        it.[it.Length - 1] <- [| DP_PopIndent |]
+        it.[it.Length - 1] <- Array.append it.[it.Length - 1]  [| DP_PopIndent |]
         it
     | Indent(i, doc) ->
         let prefix = [|DP_PushIndent i|]
@@ -119,13 +117,30 @@ let render(setences: DocPrimitive array array) (write: string -> unit) =
         write("\n")
     
 
+let pretty s = Word (s.ToString())
 let word s = Word s
 let vsep lines = VSep lines
 let align seg = Align seg
 let indent i x = Indent(i, x)
 let concat a b = Concat(a, b)
+let empty = word ""
+let parens (seg: Doc) = word "(" * seg * word ")"
+let bracket (seg: Doc) = word "[" * seg * word "]"
+
+let seplist sep lst =
+    match lst with
+    | [] -> empty
+    | hd::tl ->
+    let mutable res = hd
+    for each in tl do
+        res <- res * sep * each
+    res
 
 let showDoc (doc: Doc) =
     let sb = new StringBuilder()
     render (compileToPrims doc) (fun x -> ignore(sb.Append(x)))
     sb.ToString()
+
+let genDoc (doc: Doc) (write: string -> unit) =
+    render (compileToPrims doc) (write)
+

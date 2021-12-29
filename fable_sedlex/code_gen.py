@@ -2,14 +2,13 @@ from __future__ import annotations
 from array import array
 from typing import (TypeVar, List, Any, Optional, Generic, Callable)
 from fable_modules.fable_library.array import (take, append, concat as concat_1, last, head, skip)
-from fable_modules.fable_library.int32 import op_unary_negation_int32
-from fable_modules.fable_library.list import (empty, cons, FSharpList, is_empty, tail, head as head_1)
+from fable_modules.fable_library.list import (empty as empty_1, cons, FSharpList, is_empty, tail, head as head_1)
 from fable_modules.fable_library.reflection import (TypeInfo, list_type, int32_type, string_type, union_type, class_type)
 from fable_modules.fable_library.seq import (map, to_list)
 from fable_modules.fable_library.string import replicate
 from fable_modules.fable_library.system_text import (StringBuilder__ctor, StringBuilder__Append_Z721C83C5)
 from fable_modules.fable_library.types import (Union, to_string)
-from fable_modules.fable_library.util import ignore
+from fable_modules.fable_library.util import (ignore, get_enumerator)
 
 a_ = TypeVar("a_")
 
@@ -42,10 +41,6 @@ def Doc_op_Multiply_Z7CFFAC00(a: Doc, b: Doc) -> Doc:
 
 def Doc_op_Addition_Z7CFFAC00(a: Doc, b: Doc) -> Doc:
     return Doc_op_Multiply_Z7CFFAC00(Doc_op_Multiply_Z7CFFAC00(a, Doc(4, " ")), b)
-
-
-def Doc_op_LeftShift_2AAA0F3C(a: Doc, b: int) -> Doc:
-    return Doc(3, op_unary_negation_int32(b), a)
 
 
 def Doc_op_RightShift_2AAA0F3C(a: Doc, b: int) -> Doc:
@@ -81,7 +76,7 @@ def compile_to_prims(doc: Doc) -> List[List[DocPrimitive]]:
         
         else: 
             it[0] = append([DocPrimitive(1)], it[0], None)
-            it[len(it) - 1] = [DocPrimitive(0)]
+            it[len(it) - 1] = append(it[len(it) - 1], [DocPrimitive(0)], None)
             return it
         
     
@@ -124,7 +119,7 @@ def expr_2(gen0) -> TypeInfo:
 
 class Stack_1(Generic[a_1]):
     def __init__(self, init: Optional[Any]=None) -> None:
-        self._content = to_list(init) if (init is not None) else (empty())
+        self._content = to_list(init) if (init is not None) else (empty_1())
     
 
 Stack_1_reflection = expr_2
@@ -193,6 +188,14 @@ def render(setences: List[List[DocPrimitive]], write: Callable[[str], None]) -> 
     
 
 
+def pretty(s: Any=None) -> Doc:
+    def arrow_3(s=s) -> str:
+        copy_of_struct : a_ = s
+        return to_string(copy_of_struct)
+    
+    return Doc(4, arrow_3())
+
+
 def word(s: str) -> Doc:
     return Doc(4, s)
 
@@ -213,12 +216,40 @@ def concat(a: Doc, b: Doc) -> Doc:
     return Doc(0, a, b)
 
 
+empty = word("")
+
+def parens(seg: Doc) -> Doc:
+    return Doc_op_Multiply_Z7CFFAC00(Doc_op_Multiply_Z7CFFAC00(word("("), seg), word(")"))
+
+
+def bracket(seg: Doc) -> Doc:
+    return Doc_op_Multiply_Z7CFFAC00(Doc_op_Multiply_Z7CFFAC00(word("["), seg), word("]"))
+
+
+def seplist(sep: Doc, lst: FSharpList[Doc]) -> Doc:
+    if not is_empty(lst):
+        res : Doc = head_1(lst)
+        with get_enumerator(tail(lst)) as enumerator:
+            while enumerator.System_Collections_IEnumerator_MoveNext():
+                each : Doc = enumerator.System_Collections_Generic_IEnumerator_00601_get_Current()
+                res = Doc_op_Multiply_Z7CFFAC00(Doc_op_Multiply_Z7CFFAC00(res, sep), each)
+        return res
+    
+    else: 
+        return empty
+    
+
+
 def show_doc(doc: Doc) -> str:
     sb : Any = StringBuilder__ctor()
-    def arrow_3(x: str, doc=doc) -> None:
+    def arrow_4(x: str, doc=doc) -> None:
         ignore(StringBuilder__Append_Z721C83C5(sb, x))
     
-    render(compile_to_prims(doc), arrow_3)
+    render(compile_to_prims(doc), arrow_4)
     return to_string(sb)
+
+
+def gen_doc(doc: Doc, write: Callable[[str], None]) -> None:
+    render(compile_to_prims(doc), write)
 
 

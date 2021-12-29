@@ -471,7 +471,7 @@ let new_line lexbuf =
       lexbuf.curr_line <- lexbuf.curr_line + 1;
       lexbuf.curr_bol <- lexbuf.pos + lexbuf.offset
 
-let __private__next_int lexbuf : int =
+let public_next_int lexbuf : int =
   (* does not support refill *)
   if  (lexbuf.pos = lexbuf.len) && lexbuf.finished then -1
   else
@@ -608,7 +608,7 @@ type InlineThreadCodeGenerator(cu: compiled_unit) =
             let f_error = evaluate_state_func error
             let decision_func = (evaluate_decision_func dt)
             fun (buf: lexbuf) ->
-                let c = __private__next_int buf
+                let c = public_next_int buf
                 let c = decision_func (c)
                 match Array.tryItem c f_cases with
                 | None -> f_error buf

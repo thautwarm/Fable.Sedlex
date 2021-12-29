@@ -1,4 +1,6 @@
 from fable_sedlex.sedlex import *
+from fable_sedlex.code_gen_python import codegen_python
+from fable_sedlex.code_gen import show_doc
 
 digit = pinterval(ord('0'), ord('9'))
 
@@ -23,30 +25,3 @@ cu = build(
         (pstring("+="), Lexer_tokenize(4)),
         (peof, Lexer_tokenize(EOF_ID))
     ], "my error")
-
-f = compile_inline_thread(cu)
-buf = from_ustring(r'123 2345 + += 2.34E5 "sada\"sa" ')
-
-tokens = []
-while True:
-    try:
-        x = f(buf)
-    except Exception as e:
-        print(e)
-        raise
-    print(x)
-    if x is None:
-        continue
-    if x.token_id == EOF_ID:
-        break
-    tokens.append(x)
-
-print(tokens)
-
-from fable_sedlex.code_gen import *
-
-# vsep(
-#     [
-#         word("def")
-#         word("123")
-#     ])
