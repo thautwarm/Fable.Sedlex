@@ -7,6 +7,7 @@ buf = from_ustring(r'123 2345 + += 2.34E5 "sada\"sa" ')
 tokens = []
 EOF_ID = 0
 
+
 while True:
     try:
         x = lex(buf)
