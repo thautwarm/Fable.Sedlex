@@ -12,7 +12,6 @@ class MyToken:
   offset: int
   file: str
 
-
 f = inline_thread(cu, lambda args: MyToken(*args))
 buf = from_ustring(r'123 2345 + += 2.34E5 "sada\"sa" ')
 

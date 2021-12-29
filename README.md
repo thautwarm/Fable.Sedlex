@@ -43,7 +43,17 @@ cu = build(
         (peof, Lexer_tokenize(EOF_ID))
     ], "my error")
 
-f = compile_inline_thread(cu)
+@dataclass
+class MyToken:
+  token_id: int
+  lexeme : str
+  line: int
+  col: int
+  span: int
+  offset: int
+  file: str
+
+f = inline_thread(cu, lambda args: MyToken(*args))
 # we can also generate Python source code for equivalent lexer via:
 #    `code = show_doc(codegen_python(cu))`
 # see `test_codegen_py.py`, `generated.py` and `test_run_generated.py` 
@@ -59,7 +69,7 @@ while True:
     except Exception as e:
         print(e)
         raise
-    print(x)
+    
     if x is None:
         continue
     if x.token_id == EOF_ID:
@@ -67,16 +77,8 @@ while True:
     tokens.append(x)
 
 print(tokens)
-
 > python test.py
 
-{ token_id = 2
-  lexeme = 123
-  line = 0
-  col = 3
-  span = 3
-  offset = 0
-  file =  }
- ...
+[MyToken(token_id=2, lexeme='123', line=0, col=3, span=3, offset=0, file=''), MyToken(token_id=2, lexeme='2345', line=0, col=8, span=4, offset=4, file=''), MyToken(token_id=4, lexeme='+', line=0, col=10, span=1, offset=9, file=''), MyToken(token_id=4, lexeme='+=', line=0, col=13, span=2, offset=11, file=''), MyToken(token_id=1, lexeme='2.34E5', line=0, col=20, span=6, offset=14, file=''), MyToken(token_id=3, lexeme='"sada\\"sa"', line=0, col=31, span=10, offset=21, file='')]
 
 ```
