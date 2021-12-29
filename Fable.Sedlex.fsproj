@@ -1,14 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <OutputType>EXE</OutputType>
     <NoWarn>3370</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Sedlex.fs" />
     <Compile Include="CodeGen.fs" />
     <Compile Include="CodeGen.Python.fs" />
+    <Compile Include="Bug.fs" />
     <Compile Include="Program.fs" />
+    
     <PackageReference Include="Fable.Core.Experimental" Version="4.0.0-alpha-020" />
   </ItemGroup>
 </Project>

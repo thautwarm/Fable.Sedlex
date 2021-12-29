@@ -5,7 +5,7 @@ open Fable.CodeGen
 open Fable.Sedlex.Compiler
 open Fable.Sedlex.Compiler.Automata
 
-type CodeGenerator(cu: compiled_unit) =
+let codegen_python (cu: compiled_unit) =
 
     let mutable decision_funcs : Map<decision_tree, string> = Map.empty
 
@@ -155,7 +155,27 @@ type CodeGenerator(cu: compiled_unit) =
         push_toplevel (word table_name + word "=" + construct_table)
 
         vsep [
-            word "def" + word ("lex") * parens(word "lexerbuf: lexbuf") * word ":"
+            empty;
+            word "@dataclasses.dataclass";
+            word "class Token:";
+            vsep [
+                word "token_id: int";
+                word "lexeme : str";
+                word "line: int"
+                word "col: int"
+                word "span: int"
+                word "offset: int"
+                word "file: str"
+            ] >>> 4
+            empty;
+            word "_Token = typing.TypeVar(\"_Token\")";
+            empty;
+            word "class TokenConstructor(typing_extensions.Protocol[_Token]):";
+            vsep [
+                word "def __call__(self, token_id: int, lexeme: str, line: int, col: int, span: int, offset: int, file: str) -> _Token: ..."
+            ] >>> 4;
+            empty;
+            word "def" + word ("lex") * parens(word "lexerbuf: lexbuf" + word ", " + word "construct_token: TokenConstructor[_Token]=Token") * word ":"
             vsep [
                 word "start(lexerbuf)";
                 word "case_id" + word "=" + word initial_state_fun * parens (word "lexerbuf")
@@ -163,7 +183,7 @@ type CodeGenerator(cu: compiled_unit) =
                 word "token_id"  + word "=" + word table_name * word "[" * word "case_id" * word "]"
                 word "if token_id is not None:";
                 vsep [
-                    word "return" + word "token" * parens ( seplist (word ", ") [
+                    word "return" + word "construct_token" * parens ( seplist (word ", ") [
                         word "token_id";
                         word "lexeme(lexerbuf)";
                         word "lexerbuf.start_line";
@@ -177,17 +197,25 @@ type CodeGenerator(cu: compiled_unit) =
             ] >>> 4
         ]
 
-    member __.CodeGenDoc () =
-        for kv in cu.states do
-            cg_state_func kv.Key kv.Value
+    
+    for kv in cu.states do
+        cg_state_func kv.Key kv.Value
 
-        for dt in cu.referenced_decision_trees do
-            ignore(cg_decision_func dt)
+    for dt in cu.referenced_decision_trees do
+        ignore(cg_decision_func dt)
+    
+    
+    let middle_toplevels = compile_lexer()
+    vsep <|
+        [
+            vsep [
+                word "from fable_sedlex.sedlex import *"
+                word "import typing"
+                word "import typing_extensions"
+                word "import dataclasses"
+            ] 
+        ] @
+        toplevels @
+        [middle_toplevels] @
+        later_toplevels
 
-        let mutable middle_toplevels = compile_lexer()
-
-        vsep <| toplevels @ [middle_toplevels] @ later_toplevels
-
-
-let codegen_python (cu: compiled_unit) =
-    CodeGenerator(cu).CodeGenDoc()

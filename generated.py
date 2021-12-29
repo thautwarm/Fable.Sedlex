@@ -1,4 +1,7 @@
 from fable_sedlex.sedlex import *
+import typing
+import typing_extensions
+import dataclasses
 _sedlex_rnd_39 = [ None, 1, 2, 3, 4, 4, 0 ]  # token_ids
 
 def _sedlex_st_15(lexerbuf: lexbuf):
@@ -296,13 +299,29 @@ def _sedlex_rnd_1(lexerbuf: lexbuf):
     result = 6
     return result
 
-def lex(lexerbuf: lexbuf):
+
+@dataclasses.dataclass
+class Token:
+    token_id: int
+    lexeme : str
+    line: int
+    col: int
+    span: int
+    offset: int
+    file: str
+
+_Token = typing.TypeVar("_Token")
+
+class TokenConstructor(typing_extensions.Protocol[_Token]):
+    def __call__(self, token_id: int, lexeme: str, line: int, col: int, span: int, offset: int, file: str) -> _Token: ...
+
+def lex(lexerbuf: lexbuf ,  construct_token: TokenConstructor[_Token]=Token):
     start(lexerbuf)
     case_id = _sedlex_st_0(lexerbuf)
     if case_id < 0: raise Exception("my error")
     token_id = _sedlex_rnd_39[case_id]
     if token_id is not None:
-        return token(token_id, lexeme(lexerbuf), lexerbuf.start_line, lexerbuf.pos - lexerbuf.curr_bol, lexerbuf.pos - lexerbuf.start_pos, lexerbuf.start_pos, lexerbuf.filename)
+        return construct_token(token_id, lexeme(lexerbuf), lexerbuf.start_line, lexerbuf.pos - lexerbuf.curr_bol, lexerbuf.pos - lexerbuf.start_pos, lexerbuf.start_pos, lexerbuf.filename)
     return None
 _sedlex_rnd_38 = [_sedlex_rnd_37]
 

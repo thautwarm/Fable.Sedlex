@@ -272,58 +272,6 @@ module Automata =
 
 open Automata
 
-let por a b = alt a b
-
-let pseq xs =
-  let _pseq xs =
-    match xs with
-    | [] -> invalidOp("empty sequence")
-    | p::p1 ->
-        List.fold (fun r p -> seq r p) p p1
-  _pseq (List.ofArray xs)
-
-let pstar x = rep x
-let pplus x = plus x
-let prep p0 i1 i2 =
-    if 0 <= i1 && i1 <= i2 then repeat p0 (i1, i2)
-    else invalidOp($"repeat operator requires 0 <= {i1} <= {i2}")
-let popt p = alt eps p
-let pcompl arg =
-    match compl arg with
-    | Some r -> r
-    | None ->
-        invalidOp "the Compl operator can only applied to a single-character length regexp"
-let psub arg = char_pair_op subtract "sub" arg
-let pintersct arg = char_pair_op intersection "intersect" arg
-let pchars (arg: char array) =
-  let pchars arg =
-    let mutable c = Cset.empty
-    for ch in arg do
-        let i = int ch
-        c <- Cset.union c (Cset.singleton i)
-    chars c
-  pchars (Array.toList arg)
-
-let pinterval i_start i_end =
-    chars (Cset.interval i_start i_end)
-
-let regexp_for_char c =
-  chars (Cset.singleton (int c))
-
-let regexp_for_string s =
-  let rec aux n =
-    if n = String.length s then eps
-    else
-      seq (regexp_for_char s.[n]) (aux (Cset.succ n))
-  in aux 0
-
-let pstring (s: string) = regexp_for_string s
-
-let pchar (c: char) = regexp_for_char c
-
-let pany = pinterval 0 Cset.max_code
-
-let peof =  chars (Cset.singleton (-1))
 
 type token_id = int
 type keep_token = Discard | Tokenize of token_id
@@ -341,7 +289,7 @@ type compiled_unit = {
     referenced_decision_trees: decision_tree Set
 }
 
-type Builder() =
+let build definition  error_msg =
     let mutable partitions : Map<list<int * int> array, int> = Map.empty
     let partition_counter = ref 0
     let mutable partition_trees : Map<list<int*int> array, decision_tree> = Map.empty
@@ -375,7 +323,7 @@ type Builder() =
       !fin
 
     let rec gen_definition l error =
-      let brs = Array.ofList l in
+      let brs = l in
       let auto = compile (Array.map fst brs) in
       let cases = Array.map (fun (_, e) -> e) brs in
       let states = Array.mapi (gen_state auto) auto in
@@ -404,7 +352,7 @@ type Builder() =
         | Some _ when Array.length trans = 0 -> None
         | Some j -> Some (i, Lang_mark(j, body()))
 
-    member __.GenerateDefinition(l, error) = gen_definition l error
+    gen_definition definition error_msg
 
 
 type lexbuf = {
@@ -549,14 +497,26 @@ let with_tokenizer lexer' lexbuf =
     (token, start_p, curr_p)
   in lexer
 
-type token = {
-    token_id: token_id;
-    lexeme : string ;
-    line: int;
-    col: int;
-    span: int;
-    offset: int;
-    file: string }
+type token = interface
+  abstract tokenId: token_id;
+  abstract lexeme : string ;
+  abstract line: int;
+  abstract col: int;
+  abstract span: int;
+  abstract offset: int;
+  abstract file: string;
+end  
+
+type token_creator = (token_id * string * int * int * int * int * string) -> token
+
+// type token = {
+//     token_id: token_id;
+//     lexeme : string ;
+//     line: int;
+//     col: int;
+//     span: int;
+//     offset: int;
+//     file: string }
 
 module Utf8 =
 
@@ -572,7 +532,7 @@ module Utf8 =
     lexbuf.src.[lexbuf.start_pos ..lexbuf.pos - 1]
 
 
-type InlineThreadCodeGenerator(cu: compiled_unit) =
+let inline_thread (cu: compiled_unit) (token_creator: token_creator) =
     let mutable decision_funcs : Map<decision_tree, int -> int> = Map.empty
     let mutable state_funcs: Map<int, (lexbuf -> int) ref> = Map.empty
 
@@ -624,27 +584,76 @@ type InlineThreadCodeGenerator(cu: compiled_unit) =
             | Some Discard -> None
             | Some (Tokenize token_id) ->
                 let line, col, span = get_position buf
-                Some { token_id = token_id ;
-                       lexeme = lexeme buf;
-                       line = line;
-                       col = col;
-                       span = span;
-                       offset = buf.start_pos;
-                       file = buf.filename }
+                Some (token_creator(token_id, lexeme buf, line, col, span, buf.start_pos, buf.filename))
+                // Some { token_id = token_id ;
+                //        lexeme = lexeme buf;
+                //        line = line;
+                //        col = col;
+                //        span = span;
+                //        offset = buf.start_pos;
+                //        file = buf.filename }
             | None -> invalidOp error_msg
 
-    member __.Compile() =
-            state_funcs <- Map.map (fun _ _ -> ref Unchecked.defaultof<_>) cu.states
-            for kv in cu.states do
-                state_funcs.[kv.Key].Value <- evaluate_state_func kv.Value
-            for dt in cu.referenced_decision_trees do
-                ignore(evaluate_decision_func dt)
+    state_funcs <- Map.map (fun _ _ -> ref Unchecked.defaultof<_>) cu.states
+    for kv in cu.states do
+        state_funcs.[kv.Key].Value <- evaluate_state_func kv.Value
+    for dt in cu.referenced_decision_trees do
+        ignore(evaluate_decision_func dt)
 
-            compile_lexer()
-
-
-let build(l, error_msg) = Builder().GenerateDefinition(Array.toList l, error_msg)
-let compile_inline_thread cu = InlineThreadCodeGenerator(cu).Compile()
+    compile_lexer()
 
 let Lexer_discard = Discard
 let Lexer_tokenize i = Tokenize i
+
+let por a b = alt a b
+
+let pseq xs =
+  let _pseq xs =
+    match xs with
+    | [] -> invalidOp("empty sequence")
+    | p::p1 ->
+        List.fold (fun r p -> seq r p) p p1
+  _pseq (List.ofArray xs)
+
+let pstar x = rep x
+let pplus x = plus x
+let prep p0 i1 i2 =
+    if 0 <= i1 && i1 <= i2 then repeat p0 (i1, i2)
+    else invalidOp($"repeat operator requires 0 <= {i1} <= {i2}")
+let popt p = alt eps p
+let pcompl arg =
+    match compl arg with
+    | Some r -> r
+    | None ->
+        invalidOp "the Compl operator can only applied to a single-character length regexp"
+let psub arg = char_pair_op subtract "sub" arg
+let pintersct arg = char_pair_op intersection "intersect" arg
+let pchars (arg: char array) =
+  let pchars arg =
+    let mutable c = Cset.empty
+    for ch in arg do
+        let i = int ch
+        c <- Cset.union c (Cset.singleton i)
+    chars c
+  pchars (Array.toList arg)
+
+let pinterval i_start i_end =
+    chars (Cset.interval i_start i_end)
+
+let regexp_for_char c =
+  chars (Cset.singleton (int c))
+
+let regexp_for_string s =
+  let rec aux n =
+    if n = String.length s then eps
+    else
+      seq (regexp_for_char s.[n]) (aux (Cset.succ n))
+  in aux 0
+
+let pstring (s: string) = regexp_for_string s
+
+let pchar (c: char) = regexp_for_char c
+
+let pany = pinterval 0 Cset.max_code
+
+let peof =  chars (Cset.singleton (-1))

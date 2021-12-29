@@ -1,7 +1,19 @@
 from fable_sedlex.sedlex import *
 from test_compile_regex import cu
+from dataclasses import dataclass
 
-f = compile_inline_thread(cu)
+@dataclass
+class MyToken:
+  token_id: int
+  lexeme : str
+  line: int
+  col: int
+  span: int
+  offset: int
+  file: str
+
+
+f = inline_thread(cu, lambda args: MyToken(*args))
 buf = from_ustring(r'123 2345 + += 2.34E5 "sada\"sa" ')
 
 tokens = []

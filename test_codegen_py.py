@@ -7,6 +7,5 @@ code = show_doc(codegen_python(cu))
 # print(code)
 
 with open("generated.py", 'w', encoding='utf8') as f:
-    f.write("from fable_sedlex.sedlex import *\n")
     f.write(code)
 

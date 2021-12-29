@@ -2,6 +2,7 @@ from fable_sedlex.sedlex import *
 from fable_sedlex.code_gen_python import codegen_python
 from fable_sedlex.code_gen import show_doc
 
+
 digit = pinterval(ord('0'), ord('9'))
 
 dquote = pchar('"')
