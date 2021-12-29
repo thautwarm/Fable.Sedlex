@@ -1,4 +1,6 @@
-NOTE: currently we only have an interpreted mode. It's EASY to compile `compiled_unit`(see `compile_inline_thread` for how to write a custom backend) into source code for Python, F\# and others.
+NOTE: currently we support interpreted mode and Python source code generation.
+
+It's EASY to compile `compiled_unit` into source code for C\#, F\# and others. See `CodeGen.Python.fs` for how to write a custom backend.
 
 ## Fable.Sedlex
 
@@ -14,6 +16,8 @@ The most impressive feature of `sedlex` is that Sedlex statically analyses regul
 
 ```python
 from fable_sedlex.sedlex import *
+from fable_sedlex.code_gen_python import codegen_python
+from fable_sedlex.code_gen import show_doc
 
 digit = pinterval(ord('0'), ord('9'))
 
@@ -40,6 +44,12 @@ cu = build(
     ], "my error")
 
 f = compile_inline_thread(cu)
+# we can also generate Python source code for equivalent lexer via:
+#    `code = show_doc(codegen_python(cu))`
+# see `test_codegen_py.py`, `generated.py` and `test_run_generated.py` 
+# for more details
+
+
 buf = from_ustring(r'123 2345 + += 2.34E5 "sada\"sa" ')
 
 tokens = []
