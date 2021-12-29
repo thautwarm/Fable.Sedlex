@@ -194,6 +194,16 @@ let codegen_python (cu: compiled_unit) =
                     ])
                 ] >>> 4;
                 word "return None"
+            ] >>> 4;
+            word "def lexall(buf: lexbuf, construct: TokenConstructor[_Token], is_eof: Callable[[_Token], bool]):";
+            vsep [
+                word "while True:";
+                vsep [
+                    word "token = lex(buf, construct)";
+                    word "if token is None: continue";
+                    word "if is_eof(token): break";
+                    word "yield token";
+                ] >>> 4
             ] >>> 4
         ]
 

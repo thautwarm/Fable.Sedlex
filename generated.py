@@ -323,6 +323,12 @@ def lex(lexerbuf: lexbuf ,  construct_token: TokenConstructor[_Token]=Token):
     if token_id is not None:
         return construct_token(token_id, lexeme(lexerbuf), lexerbuf.start_line, lexerbuf.pos - lexerbuf.curr_bol, lexerbuf.pos - lexerbuf.start_pos, lexerbuf.start_pos, lexerbuf.filename)
     return None
+def lexall(buf: lexbuf, construct: TokenConstructor[_Token], is_eof: Callable[[_Token], bool]):
+    while True:
+        token = lex(buf, construct)
+        if token is None: continue
+        if is_eof(token): break
+        yield token
 _sedlex_rnd_38 = [_sedlex_rnd_37]
 
 _sedlex_rnd_36 = [_sedlex_rnd_35]
