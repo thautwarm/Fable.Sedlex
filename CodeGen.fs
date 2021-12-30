@@ -127,6 +127,17 @@ let empty = word ""
 let parens (seg: Doc) = word "(" * seg * word ")"
 let bracket (seg: Doc) = word "[" * seg * word "]"
 
+let listof lst =
+    match lst with
+    | [] -> empty
+    | hd :: tl ->
+        let mutable res = hd
+
+        for each in tl do
+            res <- res * each
+
+        res
+
 let seplist sep lst =
     match lst with
     | [] -> empty
