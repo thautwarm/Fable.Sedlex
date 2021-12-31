@@ -878,10 +878,8 @@ def from_ustring(a: str) -> lexbuf:
 chunk_size = 512
 
 def new_line(lexbuf_1: lexbuf) -> None:
-    if lexbuf_1.curr_line != 0:
-        lexbuf_1.curr_line = (lexbuf_1.curr_line + 1) or 0
-        lexbuf_1.curr_bol = (lexbuf_1.pos + lexbuf_1.offset) or 0
-    
+    lexbuf_1.curr_line = (lexbuf_1.curr_line + 1) or 0
+    lexbuf_1.curr_bol = (lexbuf_1.pos + lexbuf_1.offset) or 0
 
 
 def public_next_int(lexbuf_1: lexbuf) -> int:

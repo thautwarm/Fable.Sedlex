@@ -415,9 +415,8 @@ let from_ustring (a: string) =
 let chunk_size = 512
 
 let new_line lexbuf =
-  if lexbuf.curr_line <> 0 then
-      lexbuf.curr_line <- lexbuf.curr_line + 1;
-      lexbuf.curr_bol <- lexbuf.pos + lexbuf.offset
+  lexbuf.curr_line <- lexbuf.curr_line + 1;
+  lexbuf.curr_bol <- lexbuf.pos + lexbuf.offset
 
 let public_next_int lexbuf : int =
   (* does not support refill *)

@@ -224,6 +224,20 @@ def bracket(seg: Doc) -> Doc:
     return Doc_op_Multiply_Z7CFFAC00(Doc_op_Multiply_Z7CFFAC00(word("["), seg), word("]"))
 
 
+def listof(lst: FSharpList[Doc]) -> Doc:
+    if not is_empty(lst):
+        res : Doc = head_1(lst)
+        with get_enumerator(tail(lst)) as enumerator:
+            while enumerator.System_Collections_IEnumerator_MoveNext():
+                each : Doc = enumerator.System_Collections_Generic_IEnumerator_00601_get_Current()
+                res = Doc_op_Multiply_Z7CFFAC00(res, each)
+        return res
+    
+    else: 
+        return empty
+    
+
+
 def seplist(sep: Doc, lst: FSharpList[Doc]) -> Doc:
     if not is_empty(lst):
         res : Doc = head_1(lst)
