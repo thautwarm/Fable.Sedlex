@@ -5,7 +5,7 @@ open Fable.CodeGen
 open Fable.Sedlex.Compiler
 open Fable.Sedlex.Compiler.Automata
 
-let codegen_python (cu: compiled_unit) =
+let codegen_python (import_head: string) (cu: compiled_unit) =
 
     let mutable decision_funcs : Map<decision_tree, string> = Map.empty
 
@@ -219,7 +219,7 @@ let codegen_python (cu: compiled_unit) =
     vsep <|
         [
             vsep [
-                word "from fable_sedlex.sedlex import *"
+                word $"from {import_head}.sedlex import *"
                 word "import typing"
                 word "import typing_extensions"
                 word "import dataclasses"
