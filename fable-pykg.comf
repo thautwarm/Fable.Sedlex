@@ -1,0 +1,11 @@
+project{
+    "fable-sedlex"
+    author "thautwarm"
+    version v0.2
+    deps [ ]
+    src [
+       "Sedlex.fs"
+       "CodeGen.fs"
+       "CodeGen.Python.fs"
+    ]
+}
