@@ -1,13 +1,12 @@
 format v0.1
 project{
-    "fspy/fable-sedlex"
+    "fspy/fable-sedlex" v0.2
     author "thautwarm"
-    version v0.2
-    dep { "lang/net" >= v5.0 && < 7.0 }
+    
+    dep { "lang/net" >= v5.0 && < v7.0 }
     src {
        "CodeGen.fs"
        "CodeGen.Python.fs"
        "Sedlex.fs"
-       
     }
 }
