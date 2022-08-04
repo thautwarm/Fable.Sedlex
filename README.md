@@ -1,4 +1,4 @@
-NOTE: currently we support interpreted mode and Python source code generation.
+NOTE: currently we support interpreted mode and source code generation for Python and Julia.
 
 It's EASY to compile `compiled_unit` into source code for C\#, F\# and others. See `CodeGen.Python.fs` for how to write a custom backend.
 
@@ -17,6 +17,7 @@ The most impressive feature of `sedlex` is that Sedlex statically analyses regul
 ```python
 from fable_sedlex.sedlex import *
 from fable_sedlex.code_gen_python import codegen_python
+from fable_sedlex.code_gen_julia import codegen_julia
 from fable_sedlex.code_gen import show_doc
 
 digit = pinterval(ord('0'), ord('9'))
@@ -42,6 +43,8 @@ cu = build(
         (pstring("+="), Lexer_tokenize(4)),
         (peof, Lexer_tokenize(EOF_ID))
     ], "my error")
+
+# julia_code = codegen_julia("using Sedlex", cu)
 
 @dataclass
 class MyToken:
