@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "fable-sedlex"
+version = "0.2.0"
+description = "language agnostic lexer generator via Fable and OCaml Sedlex"
+authors = ["thautwarm <twshere@outlook.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "3.8"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

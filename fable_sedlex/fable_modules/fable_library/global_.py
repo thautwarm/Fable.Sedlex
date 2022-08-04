@@ -1,17 +1,58 @@
+from abc import abstractmethod
+from typing import (TypeVar, Protocol, Generic, Any)
 
-SR_indexOutOfBounds = "The index was outside the range of elements in the collection."
+_T = TypeVar("_T")
 
-SR_inputWasEmpty = "Collection was empty."
+class IGenericAdder_1(Protocol, Generic[_T]):
+    @abstractmethod
+    def Add(self, __arg0: _T, __arg1: _T) -> _T:
+        ...
 
-SR_inputMustBeNonNegative = "The input must be non-negative."
+    @abstractmethod
+    def GetZero(self) -> _T:
+        ...
 
-SR_inputSequenceEmpty = "The input sequence was empty."
 
-SR_inputSequenceTooLong = "The input sequence contains more than one element."
+class IGenericAverager_1(Protocol, Generic[_T]):
+    @abstractmethod
+    def Add(self, __arg0: _T, __arg1: _T) -> _T:
+        ...
 
-SR_keyNotFoundAlt = "An index satisfying the predicate was not found in the collection."
+    @abstractmethod
+    def DivideByInt(self, __arg0: _T, __arg1: int) -> _T:
+        ...
 
-SR_differentLengths = "The collections had different lengths."
+    @abstractmethod
+    def GetZero(self) -> _T:
+        ...
 
-SR_notEnoughElements = "The input sequence has an insufficient number of elements."
+
+class Symbol_wellknown(Protocol):
+    @property
+    @abstractmethod
+    def Symbol_toStringTag(self) -> str:
+        ...
+
+
+class IJsonSerializable(Protocol):
+    @abstractmethod
+    def to_json(self, key: str) -> Any:
+        ...
+
+
+SR_indexOutOfBounds : str = "The index was outside the range of elements in the collection."
+
+SR_inputWasEmpty : str = "Collection was empty."
+
+SR_inputMustBeNonNegative : str = "The input must be non-negative."
+
+SR_inputSequenceEmpty : str = "The input sequence was empty."
+
+SR_inputSequenceTooLong : str = "The input sequence contains more than one element."
+
+SR_keyNotFoundAlt : str = "An index satisfying the predicate was not found in the collection."
+
+SR_differentLengths : str = "The collections had different lengths."
+
+SR_notEnoughElements : str = "The input sequence has an insufficient number of elements."
 

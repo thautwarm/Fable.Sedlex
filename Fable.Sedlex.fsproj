@@ -5,11 +5,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Sedlex.fs" />
-    <Compile Include="CodeGen.fs" />
+    <Compile Include="PrettyDoc.fs" />
     <Compile Include="CodeGen.Python.fs" />
-    <Compile Include="Bug.fs" />
-    <Compile Include="Program.fs" />
-    
-    <PackageReference Include="Fable.Core.Experimental" Version="4.0.0-alpha-020" />
+    <Compile Include="CodeGen.Julia.fs" />
   </ItemGroup>
 </Project>

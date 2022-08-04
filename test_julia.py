@@ -1,6 +1,6 @@
 from fable_sedlex.sedlex import *
-from fable_sedlex.code_gen_python import codegen_python
-from fable_sedlex.code_gen import show_doc
+from fable_sedlex.code_gen_julia import codegen_julia
+from fable_sedlex.pretty_doc import show_doc
 
 
 digit = pinterval(ord('0'), ord('9'))
@@ -26,3 +26,12 @@ cu = build(
         (pstring("+="), Lexer_tokenize(4)),
         (peof, Lexer_tokenize(EOF_ID))
     ], "my error")
+
+header = """
+using Sedlex
+is_eof(x) = x.token_id == 0
+"""
+code = codegen_julia(header, cu)
+
+with open("julia-rts/Sedlex/test/generated.jl", 'w', encoding='utf8') as f:
+    f.write(show_doc(code))

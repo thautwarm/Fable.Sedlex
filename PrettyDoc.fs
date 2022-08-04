@@ -1,4 +1,4 @@
-module Fable.CodeGen
+module Fable.Sedlex.PrettyDoc
 
 open System.Text
 
@@ -7,10 +7,11 @@ type Doc =
     | VSep of Doc list
     | Align of Doc
     | Indent of int * Doc
-    | Word of string
+    | Segment of string
+    | Empty
 
     static member (*)(a, b) = Concat(a, b)
-    static member (+)(a, b) = a * Word " " * b
+    static member (+)(a, b) = a * Segment " " * b
     static member (>>>)(a, b) = Indent(b, a)
 
 
@@ -27,6 +28,7 @@ module Array =
 let rec compileToPrims: Doc -> DocPrimitive array array =
     fun doc ->
         match doc with
+        | Empty -> [||]
         | Concat (l, r) ->
             let l = compileToPrims l
             let r = compileToPrims r
@@ -59,7 +61,7 @@ let rec compileToPrims: Doc -> DocPrimitive array array =
                 it.[it.Length - 1] <- Array.append it.[it.Length - 1] [| DP_PopIndent |]
                 it
         | VSep (segs) -> Array.concat <| Seq.map compileToPrims segs
-        | Word s -> [| [| DP_Word s |] |]
+        | Segment s -> [| [| DP_Word s |] |]
 
 type Stack<'a>(?init: 'a seq) =
     let mutable _content =
@@ -117,15 +119,16 @@ let render (setences: DocPrimitive array array) (write: string -> unit) =
             write ("\n")
 
 
-let pretty s = Word(s.ToString())
-let word s = Word s
+let pretty s = Segment(s.ToString())
+let seg s = Segment s
+let word s = seg s
 let vsep lines = VSep lines
 let align seg = Align seg
 let indent i x = Indent(i, x)
 let concat a b = Concat(a, b)
-let empty = word ""
-let parens (seg: Doc) = word "(" * seg * word ")"
-let bracket (seg: Doc) = word "[" * seg * word "]"
+let empty = Empty
+let parens (content: Doc) = seg "(" * content * seg ")"
+let bracket (content: Doc) = seg "[" * content * seg "]"
 
 let listof lst =
     match lst with

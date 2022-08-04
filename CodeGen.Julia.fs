@@ -1,11 +1,10 @@
-module Fable.Sedlex.CodeGen.Python
+module Fable.Sedlex.CodeGen.Julia
 
 open Fable.Sedlex.PrettyDoc
-
 open Fable.Sedlex.Compiler
 open Fable.Sedlex.Compiler.Automata
 
-let codegen_python (import_head: string) (cu: compiled_unit) =
+let codegen_julia (import_head: string) (cu: compiled_unit) =
 
     let mutable decision_funcs : Map<decision_tree, string> = Map.empty
 
@@ -51,7 +50,7 @@ let codegen_python (import_head: string) (cu: compiled_unit) =
             |> seplist (word ", ")
             |> fun table_doc ->
             let n = new_tbl_name()
-            push_later_toplevel <| word n + word "=" + bracket table_doc
+            push_later_toplevel <| word "const" + word n + word "=" + bracket table_doc
             tables <- Map.add table n tables
             n
 
@@ -61,15 +60,16 @@ let codegen_python (import_head: string) (cu: compiled_unit) =
                 let yes_f = _cg_decision_func yes
                 let no_f = _cg_decision_func no
                 vsep [
-                    word "if" + word "c" + word "<=" + word (string i) * word ":";
+                    word "if" + word "c" + word "<=" + word (string i);
                         yes_f >>> 4;
-                    word "else:";
+                    word "else";
                         no_f >>> 4;
+                    word "end"
                 ]
             | Return i -> word "return" + word (string i)
             | Table(offset, t) ->
                 let tname = remember_table t
-                word "return" + word tname * word "[" * word "c" + word "-" + pretty offset * word "]" + word "-" + pretty 1
+                word "return" + word tname * word "[" * word "c" + word "-" + pretty offset + word "+ 1" * word "]" + word "-" + pretty 1
 
     let cg_decision_func tree =
         match Map.tryFind tree decision_funcs with
@@ -78,8 +78,9 @@ let codegen_python (import_head: string) (cu: compiled_unit) =
         let dtname = new_dt_name()
         let define =
             vsep [
-                word "def" + word dtname * parens (word "c: int") * word ":";
+                word "function" + word dtname * parens (word "c::Int32");
                 _cg_decision_func tree >>> 4
+                word "end"
             ]
         push_toplevel define
         decision_funcs <- Map.add tree dtname decision_funcs
@@ -87,13 +88,13 @@ let codegen_python (import_head: string) (cu: compiled_unit) =
 
     let rec _cg_state_func (lang: lang): Doc =
         match lang with
-        | Lang_backtrace -> word "result = backtrack(lexerbuf)"
+        | Lang_backtrace -> word "result = sedlex_backtrack(lexerbuf)"
         | Lang_callst i ->
             word "result" + word "=" + word (st_func_name i) * parens (word "lexerbuf")
-        | Lang_int i -> word "result" + word "=" + pretty i
+        | Lang_int i -> word "result" + word "=" + word "Int32" * parens(  pretty i )
         | Lang_mark(i, lang) ->
             vsep [
-                word <| sprintf "mark(lexerbuf, %d)" i;
+                word <| sprintf "sedlex_mark(lexerbuf, %d)" i;
                 _cg_state_func lang;
             ]
         | Lang_match_i(dt, cases, default_case) ->
@@ -103,39 +104,42 @@ let codegen_python (import_head: string) (cu: compiled_unit) =
                 let name = new_rnd_name()
                 push_toplevel <|
                     vsep [
-                        word "def" + word name * parens (word "lexerbuf: lexbuf") * word ":";
+                        word "function" + word name * parens (word "lexerbuf::lexbuf");
                         vsep [
-                            word "result = -1"
+                            word "result = Int32(-1)"
                             body;
                             word "return result"
                         ] >>> 4
+                        word "end"
                     ]
                 names <- name :: names
             let names = List.rev names
             let func_table = new_rnd_name()
             push_later_toplevel <|
-                word func_table + word "=" + bracket (seplist (word ", ") <| List.map word names )
+                word "const" + word func_table + word "=" + parens (seplist (word ", ") (List.map word names) * word ",")
             let default_body = _cg_state_func default_case
             let decision_func = (cg_decision_func dt)
-            let test =  word decision_func * parens (word "public_next_int(lexerbuf)")
+            let test =  word decision_func * parens (word "sedlex_next_int(lexerbuf)")
             vsep [
                 word "state_id" + word "="  + test;
-                word "if" + word (sprintf "state_id >= 0") * word ":";
+                word "if" + word (sprintf "state_id >= 0");
                 vsep [
-                    word "result" + word "=" + word (sprintf "%s[state_id]" func_table) * parens(word "lexerbuf")
+                    word "result" + word "=" + word (sprintf "sedlex_call_state(%s, state_id, lexerbuf)" func_table)
                 ] >>> 4;
-                word "else:";
+                word "else";
                     default_body >>> 4;
+                word "end";
             ]
 
     let cg_state_func i lang =
         vsep [
-            word "def" + word (st_func_name i) * parens(word "lexerbuf: lexbuf") * word ":"
+            word "function" + word (st_func_name i) * parens(word "lexerbuf::lexbuf")
             vsep [
-                word "result = -1" // not -1~MAXCODE could be fine
+                word "result = Int32(-1)" // not -1~MAXCODE could be fine
                 _cg_state_func lang
                 word "return result"
             ] >>> 4
+            word "end"
         ]
         |> fun define ->
         push_toplevel define
@@ -146,65 +150,63 @@ let codegen_python (import_head: string) (cu: compiled_unit) =
         let initial_state_fun = st_func_name 0
         let token_ids = Array.toList <|
                             Array.map
-                                (function | Discard -> word "None"
-                                          | Tokenize i -> pretty i)
+                                (function | Discard -> word "nothing"
+                                          | Tokenize (i: token_id) -> word "Int32" * parens(pretty i))
                                 lex_code
         let construct_table = word "["  + seplist (word ", ") token_ids +  word "]" + word " # token_ids"
         
         let table_name = new_rnd_name()
-        push_toplevel (word table_name + word "=" + construct_table)
+        push_toplevel (word "const" + word table_name + word "=" + construct_table)
 
         vsep [
             empty;
-            word "@dataclasses.dataclass";
-            word "class Token:";
+            word "struct Token";
             vsep [
-                word "token_id: int";
-                word "lexeme : str";
-                word "line: int"
-                word "col: int"
-                word "span: int"
-                word "offset: int"
-                word "file: str"
+                word "token_id::Int32";
+                word "lexeme::String";
+                word "line::Int32"
+                word "col::Int32"
+                word "span::Int32"
+                word "offset::Int32"
+                word "file::String"
             ] >>> 4
+            word "end"
             empty;
-            word "_Token = typing.TypeVar(\"_Token\")";
-            empty;
-            word "class TokenConstructor(typing_extensions.Protocol[_Token]):";
+            word "function" + word "lex" * parens(word "construct_token" * word ", " + word "lexerbuf::lexbuf")
             vsep [
-                word "def __call__(self, token_id: int, lexeme: str, line: int, col: int, span: int, offset: int, file: str) -> _Token: ..."
-            ] >>> 4;
-            empty;
-            word "def" + word ("lex") * parens(word "lexerbuf: lexbuf" + word ", " + word "construct_token: TokenConstructor[_Token]=Token") * word ":"
-            vsep [
-                word "start(lexerbuf)";
+                word "sedlex_start(lexerbuf)";
                 word "case_id" + word "=" + word initial_state_fun * parens (word "lexerbuf")
-                word "if case_id < 0:" + word "raise" + word "Exception" * parens(word error_msg)
-                word "token_id"  + word "=" + word table_name * word "[" * word "case_id" * word "]"
-                word "if token_id is not None:";
-                vsep [
-                    word "return" + word "construct_token" * parens ( seplist (word ", ") [
-                        word "token_id";
-                        word "lexeme(lexerbuf)";
-                        word "lexerbuf.start_line";
-                        word "lexerbuf.pos - lexerbuf.curr_bol";
-                        word "lexerbuf.pos - lexerbuf.start_pos";
-                        word "lexerbuf.start_pos"
-                        word "lexerbuf.filename"
-                    ])
-                ] >>> 4;
-                word "return None"
+                word "case_id < 0" + word "&&" + word "error" * parens  (seg error_msg);
+                word "token_id"  + word "=" + word table_name * word "[" * word "case_id" + word "+ 1" * word "]"
+                word "token_id == nothing" + word "&&" + word "return nothing";
+                word "return" + word "construct_token" * parens ( seplist (word ", ") [
+                    word "token_id";
+                    word "sedlex_lexeme(lexerbuf)";
+                    word "lexerbuf.start_line";
+                    word "lexerbuf.pos - lexerbuf.curr_bol";
+                    word "lexerbuf.pos - lexerbuf.start_pos";
+                    word "lexerbuf.start_pos"
+                    word "lexerbuf.filename"
+                ])
             ] >>> 4;
-            word "def lexall(buf: lexbuf, construct: TokenConstructor[_Token], is_eof: Callable[[_Token], bool]):";
+            word "end";
+            empty;
+            word "function lexall(construct_token, buf::lexbuf, is_eof #= Token -> Bool =#)";
             vsep [
-                word "while True:";
+                word "Channel{Token}() do coro"
                 vsep [
-                    word "token = lex(buf, construct)";
-                    word "if token is None: continue";
-                    word "if is_eof(token): break";
-                    word "yield token";
+                    word "while true";
+                    vsep [
+                        word "token = lex(construct_token, buf)";
+                        word "token === nothing && continue";
+                        word "is_eof(token) && break";
+                        word "put!(coro, token)";
+                    ] >>> 4
+                    word "end"
                 ] >>> 4
+                word "end"
             ] >>> 4
+            word "end";
         ]
 
     
@@ -218,12 +220,7 @@ let codegen_python (import_head: string) (cu: compiled_unit) =
     let middle_toplevels = compile_lexer()
     vsep <|
         [
-            vsep [
-                word $"from {import_head}.sedlex import *"
-                word "import typing"
-                word "import typing_extensions"
-                word "import dataclasses"
-            ] 
+            seg import_head
         ] @
         toplevels @
         [middle_toplevels] @

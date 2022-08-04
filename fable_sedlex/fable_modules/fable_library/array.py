@@ -1,49 +1,50 @@
-from array import array as array_2
+from __future__ import annotations
 import builtins
 import functools
 import math
-from typing import (Any, TypeVar, List, Callable, Optional, Tuple)
-from .global_ import SR_indexOutOfBounds
-from .native import (Helpers_allocateArrayFromCons, Helpers_fillImpl, Helpers_indexOfImpl, Helpers_spliceImpl)
-from .option import (some, default_arg, value as value_1)
-from .util import (max as max_1, compare_primitives, ignore, get_enumerator, equals as equals_1, min as min_1)
+from typing import (TypeVar, Callable, Optional, Any, Tuple)
+from .option import (some, default_arg, map as map_1, value as value_1)
+from .types import Array
+from .util import (max as max_1, compare_primitives, IEnumerable, IEqualityComparer, ignore, get_enumerator, equals as equals_1, IComparer, min as min_1)
+from .native import (Cons_1, Helpers_allocateArrayFromCons, Helpers_fillImpl, Helpers_spliceImpl, Helpers_copyToTypedArray)
+from .global_ import (SR_indexOutOfBounds, IGenericAdder_1, IGenericAverager_1)
 
-T = TypeVar("T")
+__A = TypeVar("__A")
 
-U = TypeVar("U")
+_T = TypeVar("_T")
 
-T1 = TypeVar("T1")
+_U = TypeVar("_U")
 
-T2 = TypeVar("T2")
+_T1 = TypeVar("_T1")
 
-T3 = TypeVar("T3")
+_T2 = TypeVar("_T2")
 
-State = TypeVar("State")
+_T3 = TypeVar("_T3")
 
-Result = TypeVar("Result")
+_STATE = TypeVar("_STATE")
 
-a_ = TypeVar("a_")
+_RESULT = TypeVar("_RESULT")
 
-b_ = TypeVar("b_")
+__B = TypeVar("__B")
 
-a = TypeVar("a")
+_A = TypeVar("_A")
 
-b = TypeVar("b")
+_B = TypeVar("_B")
 
-c_ = TypeVar("c_")
+__C = TypeVar("__C")
 
-def index_not_found() -> Any:
+def index_not_found() -> __A:
     raise Exception("An index satisfying the predicate was not found in the collection.")
 
 
-def different_lengths() -> Any:
+def different_lengths() -> __A:
     raise Exception("Arrays had different lengths")
 
 
-def append(array1: List[T], array2: List[T], cons: Any) -> List[T]:
+def append(array1: Array[_T], array2: Array[_T], cons: Cons_1[_T]) -> Array[_T]:
     len1 : int = len(array1) or 0
     len2 : int = len(array2) or 0
-    new_array : List[T] = Helpers_allocateArrayFromCons(cons, len1 + len2)
+    new_array : Array[_T] = Helpers_allocateArrayFromCons(cons, len1 + len2)
     for i in range(0, (len1 - 1) + 1, 1):
         new_array[i] = array1[i]
     for i_1 in range(0, (len2 - 1) + 1, 1):
@@ -51,819 +52,838 @@ def append(array1: List[T], array2: List[T], cons: Any) -> List[T]:
     return new_array
 
 
-def filter(predicate: Callable[[T], bool], array: List[T]) -> List[T]:
+def filter(predicate: Callable[[_T], bool], array: Array[_T]) -> Array[_T]:
     return list(builtins.filter(predicate, array))
 
 
-def fill(target: List[T], target_index: int, count: int, value: T=None) -> List[T]:
+def fill(target: Array[_T], target_index: int, count: int, value: _T) -> Array[_T]:
     return Helpers_fillImpl(target, value, target_index, count)
 
 
-def get_sub_array(array: List[T], start: int, count: int) -> List[T]:
+def get_sub_array(array: Array[_T], start: int, count: int) -> Array[_T]:
     return array[start:start+count]
 
 
-def last(array: List[T]) -> T:
+def last(array: Array[_T]) -> _T:
     if len(array) == 0:
         raise Exception("The input array was empty\\nParameter name: array")
-    
+
     return array[len(array) - 1]
 
 
-def try_last(array: List[T]) -> Optional[T]:
+def try_last(array: Array[_T]) -> Optional[_T]:
     if len(array) == 0:
         return None
-    
+
     else: 
         return some(array[len(array) - 1])
-    
 
 
-def map_indexed(f: Callable[[int, T], U], source: List[T], cons: Any) -> List[U]:
+
+def map_indexed(f: Any, source: Array[_T], cons: Cons_1[_U]) -> Array[_U]:
     len_1 : int = len(source) or 0
-    target : List[U] = Helpers_allocateArrayFromCons(cons, len_1)
+    target : Array[_U] = Helpers_allocateArrayFromCons(cons, len_1)
     for i in range(0, (len_1 - 1) + 1, 1):
         target[i] = f(i, source[i])
     return target
 
 
-def map(f: Callable[[T], U], source: List[T], cons: Any) -> List[U]:
+def map(f: Callable[[_T], _U], source: Array[_T], cons: Cons_1[_U]) -> Array[_U]:
     len_1 : int = len(source) or 0
-    target : List[U] = Helpers_allocateArrayFromCons(cons, len_1)
+    target : Array[_U] = Helpers_allocateArrayFromCons(cons, len_1)
     for i in range(0, (len_1 - 1) + 1, 1):
         target[i] = f(source[i])
     return target
 
 
-def map_indexed2(f: Callable[[int, T1, T2], U], source1: List[T1], source2: List[T2], cons: Any) -> List[U]:
+def map_indexed2(f: Any, source1: Array[_T1], source2: Array[_T2], cons: Cons_1[_U]) -> Array[_U]:
     if len(source1) != len(source2):
         raise Exception("Arrays had different lengths")
-    
-    result : List[U] = Helpers_allocateArrayFromCons(cons, len(source1))
+
+    result : Array[_U] = Helpers_allocateArrayFromCons(cons, len(source1))
     for i in range(0, (len(source1) - 1) + 1, 1):
         result[i] = f(i, source1[i], source2[i])
     return result
 
 
-def map2(f: Callable[[T1, T2], U], source1: List[T1], source2: List[T2], cons: Any) -> List[U]:
+def map2(f: Any, source1: Array[_T1], source2: Array[_T2], cons: Cons_1[_U]) -> Array[_U]:
     if len(source1) != len(source2):
         raise Exception("Arrays had different lengths")
-    
-    result : List[U] = Helpers_allocateArrayFromCons(cons, len(source1))
+
+    result : Array[_U] = Helpers_allocateArrayFromCons(cons, len(source1))
     for i in range(0, (len(source1) - 1) + 1, 1):
         result[i] = f(source1[i], source2[i])
     return result
 
 
-def map_indexed3(f: Callable[[int, T1, T2, T3], U], source1: List[T1], source2: List[T2], source3: List[T3], cons: Any) -> List[U]:
+def map_indexed3(f: Any, source1: Array[_T1], source2: Array[_T2], source3: Array[_T3], cons: Cons_1[_U]) -> Array[_U]:
     if True if (len(source1) != len(source2)) else (len(source2) != len(source3)):
         raise Exception("Arrays had different lengths")
-    
-    result : List[U] = Helpers_allocateArrayFromCons(cons, len(source1))
+
+    result : Array[_U] = Helpers_allocateArrayFromCons(cons, len(source1))
     for i in range(0, (len(source1) - 1) + 1, 1):
         result[i] = f(i, source1[i], source2[i], source3[i])
     return result
 
 
-def map3(f: Callable[[T1, T2, T3], U], source1: List[T1], source2: List[T2], source3: List[T3], cons: Any) -> List[U]:
+def map3(f: Any, source1: Array[_T1], source2: Array[_T2], source3: Array[_T3], cons: Cons_1[_U]) -> Array[_U]:
     if True if (len(source1) != len(source2)) else (len(source2) != len(source3)):
         raise Exception("Arrays had different lengths")
-    
-    result : List[U] = Helpers_allocateArrayFromCons(cons, len(source1))
+
+    result : Array[_U] = Helpers_allocateArrayFromCons(cons, len(source1))
     for i in range(0, (len(source1) - 1) + 1, 1):
         result[i] = f(source1[i], source2[i], source3[i])
     return result
 
 
-def map_fold(mapping: Callable[[State, T], Tuple[Result, State]], state: State, array: List[T], cons: Any) -> Tuple[List[Result], State]:
+def map_fold(mapping: Any, state: _STATE, array: Array[_T], cons: Cons_1[_RESULT]) -> Tuple[Array[_RESULT], _STATE]:
     match_value : int = len(array) or 0
     if match_value == 0:
         return ([], state)
-    
+
     else: 
-        acc : State = state
-        res : List[Result] = Helpers_allocateArrayFromCons(cons, match_value)
+        acc : _STATE = state
+        res : Array[_RESULT] = Helpers_allocateArrayFromCons(cons, match_value)
         for i in range(0, (len(array) - 1) + 1, 1):
-            pattern_input : Tuple[Result, State] = mapping(acc, array[i])
+            pattern_input : Tuple[_RESULT, _STATE] = mapping(acc, array[i])
             res[i] = pattern_input[0]
             acc = pattern_input[1]
         return (res, acc)
-    
 
 
-def map_fold_back(mapping: Callable[[T, State], Tuple[Result, State]], array: List[T], state: State, cons: Any) -> Tuple[List[Result], State]:
+
+def map_fold_back(mapping: Any, array: Array[_T], state: _STATE, cons: Cons_1[_RESULT]) -> Tuple[Array[_RESULT], _STATE]:
     match_value : int = len(array) or 0
     if match_value == 0:
         return ([], state)
-    
+
     else: 
-        acc : State = state
-        res : List[Result] = Helpers_allocateArrayFromCons(cons, match_value)
+        acc : _STATE = state
+        res : Array[_RESULT] = Helpers_allocateArrayFromCons(cons, match_value)
         for i in range(len(array) - 1, 0 - 1, -1):
-            pattern_input : Tuple[Result, State] = mapping(array[i], acc)
+            pattern_input : Tuple[_RESULT, _STATE] = mapping(array[i], acc)
             res[i] = pattern_input[0]
             acc = pattern_input[1]
         return (res, acc)
-    
 
 
-def indexed(source: List[T]) -> List[Tuple[int, T]]:
+
+def indexed(source: Array[_T]) -> Array[Tuple[int, _T]]:
     len_1 : int = len(source) or 0
-    target : List[Tuple[int, T]] = [None]*len_1
+    target : Array[Tuple[int, _T]] = [None]*len_1
     for i in range(0, (len_1 - 1) + 1, 1):
         target[i] = (i, source[i])
     return target
 
 
-def truncate(count: int, array: List[T]) -> List[T]:
-    count_1 : int = max_1(lambda x, y, count=count, array=array: compare_primitives(x, y), 0, count) or 0
+def truncate(count: int, array: Array[_T]) -> Array[_T]:
+    def arrow_47(x: int, y: int, count: int=count, array: Array[_T]=array) -> int:
+        return compare_primitives(x, y)
+
+    count_1 : int = max_1(arrow_47, 0, count) or 0
     return array[0:0+count_1]
 
 
-def concat(arrays: Any, cons: Any) -> List[T]:
-    arrays_1 : List[List[T]] = arrays if (isinstance(arrays, list)) else (list(arrays))
+def concat(arrays: IEnumerable[Array[_T]], cons: Cons_1[_T]) -> Array[_T]:
+    arrays_1 : Array[Array[_T]] = arrays if (isinstance(arrays, list)) else (list(arrays))
     match_value : int = len(arrays_1) or 0
     if match_value == 0:
         return Helpers_allocateArrayFromCons(cons, 0)
-    
+
     elif match_value == 1:
         return arrays_1[0]
-    
+
     else: 
         total_idx : int = 0
         total_length : int = 0
         for idx in range(0, (len(arrays_1) - 1) + 1, 1):
-            arr_1 : List[T] = arrays_1[idx]
+            arr_1 : Array[_T] = arrays_1[idx]
             total_length = (total_length + len(arr_1)) or 0
-        result : List[T] = Helpers_allocateArrayFromCons(cons, total_length)
+        result : Array[_T] = Helpers_allocateArrayFromCons(cons, total_length)
         for idx_1 in range(0, (len(arrays_1) - 1) + 1, 1):
-            arr_2 : List[T] = arrays_1[idx_1]
+            arr_2 : Array[_T] = arrays_1[idx_1]
             for j in range(0, (len(arr_2) - 1) + 1, 1):
                 result[total_idx] = arr_2[j]
                 total_idx = (total_idx + 1) or 0
         return result
-    
 
 
-def collect(mapping: Callable[[T], List[U]], array: List[T], cons: Any) -> List[U]:
+
+def collect(mapping: Callable[[_T], Array[_U]], array: Array[_T], cons: Cons_1[_U]) -> Array[_U]:
     return concat(map(mapping, array, None), cons)
 
 
-def where(predicate: Callable[[a_], bool], array: List[a_]) -> List[a_]:
+def where(predicate: Callable[[__A], bool], array: Array[__A]) -> Array[__A]:
     return list(builtins.filter(predicate, array))
 
 
-def contains(value: T, array: List[T], eq: Any) -> bool:
-    def loop(i_mut: int, value=value, array=array, eq=eq) -> bool:
+def index_of(array: Array[_T], item_1: _T, start: Optional[int], count: Optional[int], eq: IEqualityComparer[Any]) -> int:
+    start_1 : int = default_arg(start, 0) or 0
+    def mapping(c: int, array: Array[_T]=array, item_1: _T=item_1, start: Optional[int]=start, count: Optional[int]=count, eq: IEqualityComparer[Any]=eq) -> int:
+        return start_1 + c
+
+    end_0027 : int = default_arg(map_1(mapping, count), len(array)) or 0
+    def loop(i_mut: int, array: Array[_T]=array, item_1: _T=item_1, start: Optional[int]=start, count: Optional[int]=count, eq: IEqualityComparer[Any]=eq) -> int:
         while True:
             (i,) = (i_mut,)
-            if i >= len(array):
-                return False
-            
-            elif eq.Equals(value, array[i]):
-                return True
-            
+            if i >= end_0027:
+                return -1
+
+            elif eq.Equals(item_1, array[i]):
+                return i
+
             else: 
                 i_mut = i + 1
                 continue
-            
+
             break
-    
-    return loop(0)
+
+    return loop(start_1)
 
 
-def empty(cons: Any) -> List[a_]:
+def contains(value: _T, array: Array[_T], eq: IEqualityComparer[Any]) -> bool:
+    return index_of(array, value, None, None, eq) >= 0
+
+
+def empty(cons: Cons_1[__A]) -> Array[__A]:
     return Helpers_allocateArrayFromCons(cons, 0)
 
 
-def singleton(value: T, cons: Any) -> List[T]:
-    ar : List[T] = Helpers_allocateArrayFromCons(cons, 1)
+def singleton(value: _T, cons: Cons_1[_T]) -> Array[_T]:
+    ar : Array[_T] = Helpers_allocateArrayFromCons(cons, 1)
     ar[0] = value
     return ar
 
 
-def initialize(count: int, initializer: Callable[[int], T], cons: Any) -> List[T]:
+def initialize(count: int, initializer: Callable[[int], _T], cons: Cons_1[_T]) -> Array[_T]:
     if count < 0:
         raise Exception("The input must be non-negative\\nParameter name: count")
-    
-    result : List[T] = Helpers_allocateArrayFromCons(cons, count)
+
+    result : Array[_T] = Helpers_allocateArrayFromCons(cons, count)
     for i in range(0, (count - 1) + 1, 1):
         result[i] = initializer(i)
     return result
 
 
-def pairwise(array: List[T]) -> List[Tuple[T, T]]:
+def pairwise(array: Array[_T]) -> Array[Tuple[_T, _T]]:
     if len(array) < 2:
         return []
-    
+
     else: 
         count : int = (len(array) - 1) or 0
-        result : List[Tuple[T, T]] = [None]*count
+        result : Array[Tuple[_T, _T]] = [None]*count
         for i in range(0, (count - 1) + 1, 1):
             result[i] = (array[i], array[i + 1])
         return result
-    
 
 
-def replicate(count: int, initial: T, cons: Any) -> List[T]:
+
+def replicate(count: int, initial: _T, cons: Cons_1[_T]) -> Array[_T]:
     if count < 0:
         raise Exception("The input must be non-negative\\nParameter name: count")
-    
-    result : List[T] = Helpers_allocateArrayFromCons(cons, count)
+
+    result : Array[_T] = Helpers_allocateArrayFromCons(cons, count)
     for i in range(0, (len(result) - 1) + 1, 1):
         result[i] = initial
     return result
 
 
-def copy(array: List[T]) -> List[T]:
+def copy(array: Array[_T]) -> Array[_T]:
     return array[:]
 
 
-def reverse(array: List[T]) -> List[T]:
-    array_1 : List[T] = array[:]
+def reverse(array: Array[_T]) -> Array[_T]:
+    array_1 : Array[_T] = array[:]
     return array_1[::-1]
 
 
-def scan(folder: Callable[[State, T], State], state: State, array: List[T], cons: Any) -> List[State]:
-    res : List[State] = Helpers_allocateArrayFromCons(cons, len(array) + 1)
+def scan(folder: Any, state: _STATE, array: Array[_T], cons: Cons_1[_STATE]) -> Array[_STATE]:
+    res : Array[_STATE] = Helpers_allocateArrayFromCons(cons, len(array) + 1)
     res[0] = state
     for i in range(0, (len(array) - 1) + 1, 1):
         res[i + 1] = folder(res[i], array[i])
     return res
 
 
-def scan_back(folder: Callable[[T, State], State], array: List[T], state: State, cons: Any) -> List[State]:
-    res : List[State] = Helpers_allocateArrayFromCons(cons, len(array) + 1)
+def scan_back(folder: Any, array: Array[_T], state: _STATE, cons: Cons_1[_STATE]) -> Array[_STATE]:
+    res : Array[_STATE] = Helpers_allocateArrayFromCons(cons, len(array) + 1)
     res[len(array)] = state
     for i in range(len(array) - 1, 0 - 1, -1):
         res[i] = folder(array[i], res[i + 1])
     return res
 
 
-def skip(count: int, array: List[T], cons: Any) -> List[T]:
+def skip(count: int, array: Array[_T], cons: Cons_1[_T]) -> Array[_T]:
     if count > len(array):
         raise Exception("count is greater than array length\\nParameter name: count")
-    
+
     if count == len(array):
         return Helpers_allocateArrayFromCons(cons, 0)
-    
+
     else: 
-        count_1 : int = (0 if (count < 0) else (count)) or 0
+        count_1 : int = (0 if (count < 0) else count) or 0
         return array[count_1:]
-    
 
 
-def skip_while(predicate: Callable[[T], bool], array: List[T], cons: Any) -> List[T]:
+
+def skip_while(predicate: Callable[[_T], bool], array: Array[_T], cons: Cons_1[_T]) -> Array[_T]:
     count : int = 0
-    while predicate(array[count]) if (count < len(array)) else (False):
+    while predicate(array[count]) if (count < len(array)) else False:
         count = (count + 1) or 0
     if count == len(array):
         return Helpers_allocateArrayFromCons(cons, 0)
-    
+
     else: 
         return array[count:]
-    
 
 
-def take(count: int, array: List[T], cons: Any) -> List[T]:
+
+def take(count: int, array: Array[_T], cons: Cons_1[_T]) -> Array[_T]:
     if count < 0:
         raise Exception("The input must be non-negative\\nParameter name: count")
-    
+
     if count > len(array):
         raise Exception("count is greater than array length\\nParameter name: count")
-    
+
     if count == 0:
         return Helpers_allocateArrayFromCons(cons, 0)
-    
+
     else: 
         return array[0:0+count]
-    
 
 
-def take_while(predicate: Callable[[T], bool], array: List[T], cons: Any) -> List[T]:
+
+def take_while(predicate: Callable[[_T], bool], array: Array[_T], cons: Cons_1[_T]) -> Array[_T]:
     count : int = 0
-    while predicate(array[count]) if (count < len(array)) else (False):
+    while predicate(array[count]) if (count < len(array)) else False:
         count = (count + 1) or 0
     if count == 0:
         return Helpers_allocateArrayFromCons(cons, 0)
-    
+
     else: 
         return array[0:0+count]
-    
 
 
-def add_in_place(x: T, array: List[T]) -> None:
+
+def add_in_place(x: _T, array: Array[_T]) -> None:
     ignore(array.append(x))
 
 
-def add_range_in_place(range: Any, array: List[T]) -> None:
+def add_range_in_place(range: IEnumerable[_T], array: Array[_T]) -> None:
     with get_enumerator(range) as enumerator:
         while enumerator.System_Collections_IEnumerator_MoveNext():
             add_in_place(enumerator.System_Collections_Generic_IEnumerator_00601_get_Current(), array)
 
 
-def insert_range_in_place(index: int, range: Any, array: List[T]) -> None:
+def insert_range_in_place(index: int, range: IEnumerable[_T], array: Array[_T]) -> None:
     i : int = index or 0
     with get_enumerator(range) as enumerator:
         while enumerator.System_Collections_IEnumerator_MoveNext():
-            x : T = enumerator.System_Collections_Generic_IEnumerator_00601_get_Current()
-            def arrow_53(index=index, range=range, array=array) -> List[T]:
+            x : _T = enumerator.System_Collections_Generic_IEnumerator_00601_get_Current()
+            def arrow_48(index: int=index, range: IEnumerable[_T]=range, array: Array[_T]=array) -> Array[_T]:
                 index_1 : int = i or 0
                 return array.insert(index_1, x)
-            
-            ignore(arrow_53())
+
+            ignore(arrow_48())
             i = (i + 1) or 0
 
 
-def remove_in_place(item_1: T, array: List[T]) -> bool:
-    i : int = Helpers_indexOfImpl(array, item_1, 0) or 0
+def remove_in_place(item_1: _T, array: Array[_T], eq: IEqualityComparer[Any]) -> bool:
+    i : int = index_of(array, item_1, None, None, eq) or 0
     if i > -1:
         ignore(Helpers_spliceImpl(array, i, 1))
         return True
-    
+
     else: 
         return False
-    
 
 
-def remove_all_in_place(predicate: Callable[[T], bool], array: List[T]) -> int:
-    def count_remove_all(count: int, predicate=predicate, array=array) -> int:
+
+def remove_all_in_place(predicate: Callable[[_T], bool], array: Array[_T]) -> int:
+    def count_remove_all(count: int, predicate: Callable[[_T], bool]=predicate, array: Array[_T]=array) -> int:
         i : int = (next((i for i, x in enumerate(array) if (predicate)(x)), -1)) or 0
         if i > -1:
             ignore(Helpers_spliceImpl(array, i, 1))
             return count_remove_all(count) + 1
-        
+
         else: 
             return count
-        
-    
+
+
     return count_remove_all(0)
 
 
-def copy_to(source: List[T], source_index: int, target: List[T], target_index: int, count: int) -> None:
+def copy_to(source: Array[_T], source_index: int, target: Array[_T], target_index: int, count: int) -> None:
     diff : int = (target_index - source_index) or 0
     for i in range(source_index, ((source_index + count) - 1) + 1, 1):
         target[i + diff] = source[i]
 
 
-def copy_to_typed_array(source: List[T], source_index: int, target: List[T], target_index: int, count: int) -> None:
+def copy_to_typed_array(source: Array[_T], source_index: int, target: Array[_T], target_index: int, count: int) -> None:
     try: 
-        target.set(source.subarray(source_index, source_index + count), target_index)
-    
+        Helpers_copyToTypedArray(source, source_index, target, target_index, count)
+
     except Exception as match_value:
         copy_to(source, source_index, target, target_index, count)
-    
 
 
-def index_of(array: List[T], item_1: T, start: Optional[int]=None, count: Optional[int]=None) -> int:
-    start_1 : int = default_arg(start, 0) or 0
-    i : int = Helpers_indexOfImpl(array, item_1, start_1) or 0
-    if i >= (start_1 + value_1(count)) if (count is not None) else (False):
-        return -1
-    
-    else: 
-        return i
-    
 
-
-def partition(f: Callable[[T], bool], source: List[T], cons: Any) -> Tuple[List[T], List[T]]:
+def partition(f: Callable[[_T], bool], source: Array[_T], cons: Cons_1[_T]) -> Tuple[Array[_T], Array[_T]]:
     len_1 : int = len(source) or 0
-    res1 : List[T] = Helpers_allocateArrayFromCons(cons, len_1)
-    res2 : List[T] = Helpers_allocateArrayFromCons(cons, len_1)
+    res1 : Array[_T] = Helpers_allocateArrayFromCons(cons, len_1)
+    res2 : Array[_T] = Helpers_allocateArrayFromCons(cons, len_1)
     i_true : int = 0
     i_false : int = 0
     for i in range(0, (len_1 - 1) + 1, 1):
         if f(source[i]):
             res1[i_true] = source[i]
             i_true = (i_true + 1) or 0
-        
+
         else: 
             res2[i_false] = source[i]
             i_false = (i_false + 1) or 0
-        
+
     return (truncate(i_true, res1), truncate(i_false, res2))
 
 
-def find(predicate: Callable[[T], bool], array: List[T]) -> T:
-    match_value : Optional[T] = next((x for x in array if (predicate)(x)), None)
+def find(predicate: Callable[[_T], bool], array: Array[_T]) -> _T:
+    match_value : Optional[_T] = next((x for x in array if (predicate)(x)), None)
     if match_value is None:
         return index_not_found()
-    
+
     else: 
         return value_1(match_value)
-    
 
 
-def try_find(predicate: Callable[[T], bool], array: List[T]) -> Optional[T]:
+
+def try_find(predicate: Callable[[_T], bool], array: Array[_T]) -> Optional[_T]:
     return next((x for x in array if (predicate)(x)), None)
 
 
-def find_index(predicate: Callable[[T], bool], array: List[T]) -> int:
+def find_index(predicate: Callable[[_T], bool], array: Array[_T]) -> int:
     match_value : int = (next((i for i, x in enumerate(array) if (predicate)(x)), -1)) or 0
     if match_value > -1:
         return match_value
-    
+
     else: 
         return index_not_found()
-    
 
 
-def try_find_index(predicate: Callable[[T], bool], array: List[T]) -> Optional[int]:
+
+def try_find_index(predicate: Callable[[_T], bool], array: Array[_T]) -> Optional[int]:
     match_value : int = (next((i for i, x in enumerate(array) if (predicate)(x)), -1)) or 0
     if match_value > -1:
         return match_value
-    
+
     else: 
         return None
-    
 
 
-def pick(chooser: Callable[[a_], Optional[b_]], array: List[a_]) -> b_:
-    def loop(i_mut: int, chooser=chooser, array=array) -> Any:
+
+def pick(chooser: Callable[[__A], Optional[__B]], array: Array[__A]) -> __B:
+    def loop(i_mut: int, chooser: Callable[[__A], Optional[__B]]=chooser, array: Array[__A]=array) -> __B:
         while True:
             (i,) = (i_mut,)
             if i >= len(array):
                 return index_not_found()
-            
+
             else: 
-                match_value : Optional[b_] = chooser(array[i])
+                match_value : Optional[__B] = chooser(array[i])
                 if match_value is not None:
                     return value_1(match_value)
-                
+
                 else: 
                     i_mut = i + 1
                     continue
-                
-            
+
+
             break
-    
+
     return loop(0)
 
 
-def try_pick(chooser: Callable[[a_], Optional[b_]], array: List[a_]) -> Optional[b_]:
-    def loop(i_mut: int, chooser=chooser, array=array) -> Optional[b_]:
+def try_pick(chooser: Callable[[__A], Optional[__B]], array: Array[__A]) -> Optional[__B]:
+    def loop(i_mut: int, chooser: Callable[[__A], Optional[__B]]=chooser, array: Array[__A]=array) -> Optional[__B]:
         while True:
             (i,) = (i_mut,)
             if i >= len(array):
                 return None
-            
+
             else: 
-                match_value : Optional[b_] = chooser(array[i])
+                match_value : Optional[__B] = chooser(array[i])
                 if match_value is None:
                     i_mut = i + 1
                     continue
-                
+
                 else: 
                     return match_value
-                
-            
+
+
             break
-    
+
     return loop(0)
 
 
-def find_back(predicate: Callable[[a_], bool], array: List[a_]) -> a_:
-    def loop(i_mut: int, predicate=predicate, array=array) -> Any:
+def find_back(predicate: Callable[[__A], bool], array: Array[__A]) -> __A:
+    def loop(i_mut: int, predicate: Callable[[__A], bool]=predicate, array: Array[__A]=array) -> __A:
         while True:
             (i,) = (i_mut,)
             if i < 0:
                 return index_not_found()
-            
+
             elif predicate(array[i]):
                 return array[i]
-            
+
             else: 
                 i_mut = i - 1
                 continue
-            
+
             break
-    
+
     return loop(len(array) - 1)
 
 
-def try_find_back(predicate: Callable[[a_], bool], array: List[a_]) -> Optional[a_]:
-    def loop(i_mut: int, predicate=predicate, array=array) -> Optional[a_]:
+def try_find_back(predicate: Callable[[__A], bool], array: Array[__A]) -> Optional[__A]:
+    def loop(i_mut: int, predicate: Callable[[__A], bool]=predicate, array: Array[__A]=array) -> Optional[__A]:
         while True:
             (i,) = (i_mut,)
             if i < 0:
                 return None
-            
+
             elif predicate(array[i]):
                 return some(array[i])
-            
+
             else: 
                 i_mut = i - 1
                 continue
-            
+
             break
-    
+
     return loop(len(array) - 1)
 
 
-def find_last_index(predicate: Callable[[a_], bool], array: List[a_]) -> int:
-    def loop(i_mut: int, predicate=predicate, array=array) -> int:
+def find_last_index(predicate: Callable[[__A], bool], array: Array[__A]) -> int:
+    def loop(i_mut: int, predicate: Callable[[__A], bool]=predicate, array: Array[__A]=array) -> int:
         while True:
             (i,) = (i_mut,)
             if i < 0:
                 return -1
-            
+
             elif predicate(array[i]):
                 return i
-            
+
             else: 
                 i_mut = i - 1
                 continue
-            
+
             break
-    
+
     return loop(len(array) - 1)
 
 
-def find_index_back(predicate: Callable[[a_], bool], array: List[a_]) -> int:
-    def loop(i_mut: int, predicate=predicate, array=array) -> int:
+def find_index_back(predicate: Callable[[__A], bool], array: Array[__A]) -> int:
+    def loop(i_mut: int, predicate: Callable[[__A], bool]=predicate, array: Array[__A]=array) -> int:
         while True:
             (i,) = (i_mut,)
             if i < 0:
                 return index_not_found()
-            
+
             elif predicate(array[i]):
                 return i
-            
+
             else: 
                 i_mut = i - 1
                 continue
-            
+
             break
-    
+
     return loop(len(array) - 1)
 
 
-def try_find_index_back(predicate: Callable[[a_], bool], array: List[a_]) -> Optional[int]:
-    def loop(i_mut: int, predicate=predicate, array=array) -> Optional[int]:
+def try_find_index_back(predicate: Callable[[__A], bool], array: Array[__A]) -> Optional[int]:
+    def loop(i_mut: int, predicate: Callable[[__A], bool]=predicate, array: Array[__A]=array) -> Optional[int]:
         while True:
             (i,) = (i_mut,)
             if i < 0:
                 return None
-            
+
             elif predicate(array[i]):
                 return i
-            
+
             else: 
                 i_mut = i - 1
                 continue
-            
+
             break
-    
+
     return loop(len(array) - 1)
 
 
-def choose(chooser: Callable[[T], Optional[U]], array: List[T], cons: Any) -> List[U]:
-    res : List[U] = []
+def choose(chooser: Callable[[_T], Optional[_U]], array: Array[_T], cons: Cons_1[_U]) -> Array[_U]:
+    res : Array[_U] = []
     for i in range(0, (len(array) - 1) + 1, 1):
-        match_value : Optional[U] = chooser(array[i])
+        match_value : Optional[_U] = chooser(array[i])
         if match_value is not None:
-            ignore(res.append(value_1(match_value)))
-        
+            y : _U = value_1(match_value)
+            ignore(res.append(y))
+
     if equals_1(cons, None):
         return res
-    
+
     else: 
-        return map(lambda x=None, chooser=chooser, array=array, cons=cons: x, res, cons)
-    
+        def arrow_49(x: Optional[_U]=None, chooser: Callable[[_T], Optional[_U]]=chooser, array: Array[_T]=array, cons: Cons_1[_U]=cons) -> _U:
+            return x
+
+        return map(arrow_49, res, cons)
 
 
-def fold_indexed(folder: Callable[[int, State, T], State], state: State, array: List[T]) -> State:
-    return array.reduce((lambda delegate_arg0, delegate_arg1, delegate_arg2, folder=folder, state=state, array=array: folder(delegate_arg2, delegate_arg0, delegate_arg1), state))
+
+def fold_indexed(folder: Any, state: _STATE, array: Array[_T]) -> _STATE:
+    def arrow_50(delegate_arg: _STATE, delegate_arg_1: _T, delegate_arg_2: int, folder: Any=folder, state: _STATE=state, array: Array[_T]=array) -> _STATE:
+        return folder(delegate_arg_2, delegate_arg, delegate_arg_1)
+
+    return array.reduce((arrow_50, state))
 
 
-def fold(folder: Callable[[State, T], State], state: State, array: List[T]) -> State:
-    return functools.reduce((lambda acc, x=None, folder=folder, state=state, array=array: folder(acc, x)), array, state)
+def fold(folder: Any, state: _STATE, array: Array[_T]) -> _STATE:
+    def arrow_51(acc: _STATE, x: _T, folder: Any=folder, state: _STATE=state, array: Array[_T]=array) -> _STATE:
+        return folder(acc, x)
+
+    return functools.reduce(arrow_51, array, state)
 
 
-def iterate(action: Callable[[T], None], array: List[T]) -> None:
+def iterate(action: Callable[[_T], None], array: Array[_T]) -> None:
     for i in range(0, (len(array) - 1) + 1, 1):
         action(array[i])
 
 
-def iterate_indexed(action: Callable[[int, T], None], array: List[T]) -> None:
+def iterate_indexed(action: Any, array: Array[_T]) -> None:
     for i in range(0, (len(array) - 1) + 1, 1):
         action(i, array[i])
 
 
-def iterate2(action: Callable[[T, T], None], array1: List[T], array2: List[T]) -> None:
+def iterate2(action: Any, array1: Array[_T], array2: Array[_T]) -> None:
     if len(array1) != len(array2):
         different_lengths()
-    
+
     for i in range(0, (len(array1) - 1) + 1, 1):
         action(array1[i], array2[i])
 
 
-def iterate_indexed2(action: Callable[[int, T, T], None], array1: List[T], array2: List[T]) -> None:
+def iterate_indexed2(action: Any, array1: Array[_T], array2: Array[_T]) -> None:
     if len(array1) != len(array2):
         different_lengths()
-    
+
     for i in range(0, (len(array1) - 1) + 1, 1):
         action(i, array1[i], array2[i])
 
 
-def is_empty(array: List[T]) -> bool:
+def is_empty(array: Array[_T]) -> bool:
     return len(array) == 0
 
 
-def for_all(predicate: Callable[[T], bool], array: List[T]) -> bool:
+def for_all(predicate: Callable[[_T], bool], array: Array[_T]) -> bool:
     return all([predicate(x) for x in array])
 
 
-def permute(f: Callable[[int], int], array: List[T]) -> List[T]:
+def permute(f: Callable[[int], int], array: Array[_T]) -> Array[_T]:
     size : int = len(array) or 0
-    res : List[T] = array[:]
-    check_flags : array_2 = [None]*size
-    def arrow_62(i: int, x: Any=None, f=f, array=array) -> None:
+    res : Array[_T] = array[:]
+    check_flags : Array[int] = [None]*size
+    def arrow_52(i: int, x: _T, f: Callable[[int], int]=f, array: Array[_T]=array) -> None:
         j : int = f(i) or 0
         if True if (j < 0) else (j >= size):
             raise Exception("Not a valid permutation")
-        
+
         res[j] = x
         check_flags[j] = 1
-    
-    iterate_indexed(arrow_62, array)
-    if not (all([(lambda y, f=f, array=array: 1 == y)(x) for x in check_flags])):
+
+    iterate_indexed(arrow_52, array)
+    def predicate(y: int, f: Callable[[int], int]=f, array: Array[_T]=array) -> bool:
+        return 1 == y
+
+    if not (all([predicate(x) for x in check_flags])):
         raise Exception("Not a valid permutation")
-    
+
     return res
 
 
-def set_slice(target: List[T], lower: Optional[int], upper: Optional[int], source: List[T]) -> None:
+def set_slice(target: Array[_T], lower: Optional[int], upper: Optional[int], source: Array[_T]) -> None:
     lower_1 : int = default_arg(lower, 0) or 0
-    upper_1 : int = default_arg(upper, 0) or 0
-    length : int = ((upper_1 if (upper_1 > 0) else (len(target) - 1)) - lower_1) or 0
+    upper_1 : int = default_arg(upper, -1) or 0
+    length : int = ((upper_1 if (upper_1 >= 0) else (len(target) - 1)) - lower_1) or 0
     for i in range(0, length + 1, 1):
         target[i + lower_1] = source[i]
 
 
-def sort_in_place_by(projection: Callable[[a], b], xs: List[a], comparer: Any) -> None:
+def sort_in_place_by(projection: Callable[[_A], _B], xs: Array[_A], comparer: IComparer[_B]) -> None:
+    def arrow_53(x: _A, y: _A, projection: Callable[[_A], _B]=projection, xs: Array[_A]=xs, comparer: IComparer[_B]=comparer) -> int:
+        return comparer.Compare(projection(x), projection(y))
+
     xs.sort()
 
 
-def sort_in_place(xs: List[T], comparer: Any) -> None:
+def sort_in_place(xs: Array[_T], comparer: IComparer[_T]) -> None:
+    def arrow_54(x: _T, y: _T, xs: Array[_T]=xs, comparer: IComparer[_T]=comparer) -> int:
+        return comparer.Compare(x, y)
+
     xs.sort()
 
 
-def sort(xs: List[T], comparer: Any) -> List[T]:
-    xs_1 : List[T] = xs[:]
-    def expr_65():
-        xs_1.sort()
-        return xs_1
-    
-    return expr_65()
+def sort(xs: Array[_T], comparer: IComparer[_T]) -> Array[_T]:
+    xs_1 : Array[_T] = xs[:]
+    def comparer_1(x: _T, y: _T, xs: Array[_T]=xs, comparer: IComparer[_T]=comparer) -> int:
+        return comparer.Compare(x, y)
+
+    xs_1.sort()
+    return xs_1
 
 
-def sort_by(projection: Callable[[a], b], xs: List[a], comparer: Any) -> List[a]:
-    xs_1 : List[a] = xs[:]
-    def expr_66():
-        xs_1.sort()
-        return xs_1
-    
-    return expr_66()
+def sort_by(projection: Callable[[_A], _B], xs: Array[_A], comparer: IComparer[_B]) -> Array[_A]:
+    xs_1 : Array[_A] = xs[:]
+    def comparer_1(x: _A, y: _A, projection: Callable[[_A], _B]=projection, xs: Array[_A]=xs, comparer: IComparer[_B]=comparer) -> int:
+        return comparer.Compare(projection(x), projection(y))
+
+    xs_1.sort()
+    return xs_1
 
 
-def sort_descending(xs: List[T], comparer: Any) -> List[T]:
-    xs_1 : List[T] = xs[:]
-    def expr_67():
-        xs_1.sort()
-        return xs_1
-    
-    return expr_67()
+def sort_descending(xs: Array[_T], comparer: IComparer[_T]) -> Array[_T]:
+    xs_1 : Array[_T] = xs[:]
+    def comparer_1(x: _T, y: _T, xs: Array[_T]=xs, comparer: IComparer[_T]=comparer) -> int:
+        return comparer.Compare(x, y) * -1
+
+    xs_1.sort()
+    return xs_1
 
 
-def sort_by_descending(projection: Callable[[a], b], xs: List[a], comparer: Any) -> List[a]:
-    xs_1 : List[a] = xs[:]
-    def expr_68():
-        xs_1.sort()
-        return xs_1
-    
-    return expr_68()
+def sort_by_descending(projection: Callable[[_A], _B], xs: Array[_A], comparer: IComparer[_B]) -> Array[_A]:
+    xs_1 : Array[_A] = xs[:]
+    def comparer_1(x: _A, y: _A, projection: Callable[[_A], _B]=projection, xs: Array[_A]=xs, comparer: IComparer[_B]=comparer) -> int:
+        return comparer.Compare(projection(x), projection(y)) * -1
+
+    xs_1.sort()
+    return xs_1
 
 
-def sort_with(comparer: Callable[[T, T], int], xs: List[T]) -> List[T]:
-    comparer_1 : Callable[[T, T], int] = comparer
-    xs_1 : List[T] = xs[:]
-    def expr_69():
-        xs_1.sort()
-        return xs_1
-    
-    return expr_69()
+def sort_with(comparer: Any, xs: Array[_T]) -> Array[_T]:
+    comparer_1 : Callable[[_T, _T], int] = comparer
+    xs_1 : Array[_T] = xs[:]
+    xs_1.sort()
+    return xs_1
 
 
-def all_pairs(xs: List[T1], ys: List[T2]) -> List[Tuple[T1, T2]]:
+def all_pairs(xs: Array[_T1], ys: Array[_T2]) -> Array[Tuple[_T1, _T2]]:
     len1 : int = len(xs) or 0
     len2 : int = len(ys) or 0
-    res : List[Tuple[T1, T2]] = [None]*(len1 * len2)
+    res : Array[Tuple[_T1, _T2]] = [None]*(len1 * len2)
     for i in range(0, (len(xs) - 1) + 1, 1):
         for j in range(0, (len(ys) - 1) + 1, 1):
             res[(i * len2) + j] = (xs[i], ys[j])
     return res
 
 
-def unfold(generator: Callable[[State], Optional[Tuple[T, State]]], state: State=None) -> List[T]:
-    res : List[T] = []
-    def loop(state_1_mut: Any=None, generator=generator, state=state) -> None:
+def unfold(generator: Callable[[_STATE], Optional[Tuple[_T, _STATE]]], state: _STATE) -> Array[_T]:
+    res : Array[_T] = []
+    def loop(state_1_mut: Optional[_STATE]=None, generator: Callable[[_STATE], Optional[Tuple[_T, _STATE]]]=generator, state: _STATE=state) -> None:
         while True:
             (state_1,) = (state_1_mut,)
-            match_value : Optional[Tuple[T, State]] = generator(state_1)
+            match_value : Optional[Tuple[_T, _STATE]] = generator(state_1)
             if match_value is not None:
-                s : State = match_value[1]
-                ignore(res.append(match_value[0]))
+                x : _T = match_value[0]
+                s : _STATE = match_value[1]
+                ignore(res.append(x))
                 state_1_mut = s
                 continue
-            
+
             break
-    
+
     loop(state)
     return res
 
 
-def unzip(array: List[Tuple[a_, b_]]) -> Tuple[List[a_], List[b_]]:
+def unzip(array: Array[Tuple[__A, __B]]) -> Tuple[Array[__A], Array[__B]]:
     len_1 : int = len(array) or 0
-    res1 : List[a_] = [None]*len_1
-    res2 : List[b_] = [None]*len_1
-    def arrow_70(i: int, tupled_arg: Tuple[a_, b_], array=array) -> None:
+    res1 : Array[__A] = [None]*len_1
+    res2 : Array[__B] = [None]*len_1
+    def arrow_55(i: int, tupled_arg: Tuple[__A, __B], array: Array[Tuple[__A, __B]]=array) -> None:
         res1[i] = tupled_arg[0]
         res2[i] = tupled_arg[1]
-    
-    iterate_indexed(arrow_70, array)
+
+    iterate_indexed(arrow_55, array)
     return (res1, res2)
 
 
-def unzip3(array: List[Tuple[a_, b_, c_]]) -> Tuple[List[a_], List[b_], List[c_]]:
+def unzip3(array: Array[Tuple[__A, __B, __C]]) -> Tuple[Array[__A], Array[__B], Array[__C]]:
     len_1 : int = len(array) or 0
-    res1 : List[a_] = [None]*len_1
-    res2 : List[b_] = [None]*len_1
-    res3 : List[c_] = [None]*len_1
-    def arrow_71(i: int, tupled_arg: Tuple[a_, b_, c_], array=array) -> None:
+    res1 : Array[__A] = [None]*len_1
+    res2 : Array[__B] = [None]*len_1
+    res3 : Array[__C] = [None]*len_1
+    def arrow_56(i: int, tupled_arg: Tuple[__A, __B, __C], array: Array[Tuple[__A, __B, __C]]=array) -> None:
         res1[i] = tupled_arg[0]
         res2[i] = tupled_arg[1]
         res3[i] = tupled_arg[2]
-    
-    iterate_indexed(arrow_71, array)
+
+    iterate_indexed(arrow_56, array)
     return (res1, res2, res3)
 
 
-def zip(array1: List[T], array2: List[U]) -> List[Tuple[T, U]]:
+def zip(array1: Array[_T], array2: Array[_U]) -> Array[Tuple[_T, _U]]:
     if len(array1) != len(array2):
         different_lengths()
-    
-    result : List[Tuple[T, U]] = [None]*len(array1)
+
+    result : Array[Tuple[_T, _U]] = [None]*len(array1)
     for i in range(0, (len(array1) - 1) + 1, 1):
         result[i] = (array1[i], array2[i])
     return result
 
 
-def zip3(array1: List[T], array2: List[U], array3: List[U]) -> List[Tuple[T, U, U]]:
+def zip3(array1: Array[_T], array2: Array[_U], array3: Array[_U]) -> Array[Tuple[_T, _U, _U]]:
     if True if (len(array1) != len(array2)) else (len(array2) != len(array3)):
         different_lengths()
-    
-    result : List[Tuple[T, U, U]] = [None]*len(array1)
+
+    result : Array[Tuple[_T, _U, _U]] = [None]*len(array1)
     for i in range(0, (len(array1) - 1) + 1, 1):
         result[i] = (array1[i], array2[i], array3[i])
     return result
 
 
-def chunk_by_size(chunk_size: int, array: List[T]) -> List[List[T]]:
+def chunk_by_size(chunk_size: int, array: Array[_T]) -> Array[Array[_T]]:
     if chunk_size < 1:
         raise Exception("The input must be positive.\\nParameter name: size")
-    
+
     if len(array) == 0:
         return [[]]
-    
+
     else: 
-        result : List[List[T]] = []
+        result : Array[Array[_T]] = []
         for x in range(0, (int(math.ceil(len(array) / chunk_size)) - 1) + 1, 1):
             start : int = (x * chunk_size) or 0
-            ignore(result.append(array[start:start+chunk_size]))
+            slice : Array[_T] = array[start:start+chunk_size]
+            ignore(result.append(slice))
         return result
-    
 
 
-def split_at(index: int, array: List[T]) -> Tuple[List[T], List[T]]:
+
+def split_at(index: int, array: Array[_T]) -> Tuple[Array[_T], Array[_T]]:
     if True if (index < 0) else (index > len(array)):
         raise Exception((SR_indexOutOfBounds + "\\nParameter name: ") + "index")
-    
+
     return (array[0:0+index], array[index:])
 
 
-def compare_with(comparer: Callable[[T, T], int], array1: List[T], array2: List[T]) -> int:
+def compare_with(comparer: Any, array1: Array[_T], array2: Array[_T]) -> int:
     if array1 is None:
         if array2 is None:
             return 0
-        
+
         else: 
             return -1
-        
-    
+
+
     elif array2 is None:
         return 1
-    
+
     else: 
         i : int = 0
         result : int = 0
@@ -871,31 +891,31 @@ def compare_with(comparer: Callable[[T, T], int], array1: List[T], array2: List[
         length2 : int = len(array2) or 0
         if length1 > length2:
             return 1
-        
+
         elif length1 < length2:
             return -1
-        
+
         else: 
-            while result == 0 if (i < length1) else (False):
+            while (result == 0) if (i < length1) else False:
                 result = comparer(array1[i], array2[i]) or 0
                 i = (i + 1) or 0
             return result
-        
-    
 
 
-def equals_with(equals: Callable[[T, T], bool], array1: List[T], array2: List[T]) -> bool:
+
+
+def equals_with(equals: Any, array1: Array[_T], array2: Array[_T]) -> bool:
     if array1 is None:
         if array2 is None:
             return True
-        
+
         else: 
             return False
-        
-    
+
+
     elif array2 is None:
         return False
-    
+
     else: 
         i : int = 0
         result : bool = True
@@ -903,289 +923,329 @@ def equals_with(equals: Callable[[T, T], bool], array1: List[T], array2: List[T]
         length2 : int = len(array2) or 0
         if length1 > length2:
             return False
-        
+
         elif length1 < length2:
             return False
-        
+
         else: 
-            while result if (i < length1) else (False):
+            while result if (i < length1) else False:
                 result = equals(array1[i], array2[i])
                 i = (i + 1) or 0
             return result
-        
-    
 
 
-def exactly_one(array: List[T]) -> T:
+
+
+def exactly_one(array: Array[_T]) -> _T:
     if len(array) == 1:
         return array[0]
-    
+
     elif len(array) == 0:
         raise Exception("The input sequence was empty\\nParameter name: array")
-    
+
     else: 
         raise Exception("Input array too long\\nParameter name: array")
-    
 
 
-def try_exactly_one(array: List[T]) -> Optional[T]:
+
+def try_exactly_one(array: Array[_T]) -> Optional[_T]:
     if len(array) == 1:
         return some(array[0])
-    
+
     else: 
         return None
-    
 
 
-def head(array: List[T]) -> T:
+
+def head(array: Array[_T]) -> _T:
     if len(array) == 0:
         raise Exception("The input array was empty\\nParameter name: array")
-    
+
     else: 
         return array[0]
-    
 
 
-def try_head(array: List[T]) -> Optional[T]:
+
+def try_head(array: Array[_T]) -> Optional[_T]:
     if len(array) == 0:
         return None
-    
+
     else: 
         return some(array[0])
-    
 
 
-def tail(array: List[T]) -> List[T]:
+
+def tail(array: Array[_T]) -> Array[_T]:
     if len(array) == 0:
         raise Exception("Not enough elements\\nParameter name: array")
-    
+
     return array[1:]
 
 
-def item(index: int, array: List[a_]) -> a_:
+def item(index: int, array: Array[__A]) -> __A:
     return array[index]
 
 
-def try_item(index: int, array: List[T]) -> Optional[T]:
+def try_item(index: int, array: Array[_T]) -> Optional[_T]:
     if True if (index < 0) else (index >= len(array)):
         return None
-    
+
     else: 
         return some(array[index])
-    
 
 
-def fold_back_indexed(folder: Callable[[int, T, State], State], array: List[T], state: State=None) -> State:
-    return array.reduceRight((lambda delegate_arg0, delegate_arg1, delegate_arg2, folder=folder, array=array, state=state: folder(delegate_arg2, delegate_arg1, delegate_arg0), state))
+
+def fold_back_indexed(folder: Any, array: Array[_T], state: _STATE) -> _STATE:
+    def arrow_57(delegate_arg: _STATE, delegate_arg_1: _T, delegate_arg_2: int, folder: Any=folder, array: Array[_T]=array, state: _STATE=state) -> _STATE:
+        return folder(delegate_arg_2, delegate_arg_1, delegate_arg)
+
+    return array.reduceRight((arrow_57, state))
 
 
-def fold_back(folder: Callable[[T, State], State], array: List[T], state: State=None) -> State:
-    return functools.reduce((lambda acc, x=None, folder=folder, array=array, state=state: folder(x, acc)), array[::-1], state)
+def fold_back(folder: Any, array: Array[_T], state: _STATE) -> _STATE:
+    def arrow_58(acc: _STATE, x: _T, folder: Any=folder, array: Array[_T]=array, state: _STATE=state) -> _STATE:
+        return folder(x, acc)
+
+    return functools.reduce(arrow_58, array[::-1], state)
 
 
-def fold_indexed2(folder: Callable[[int, a_, b_, c_], a_], state: a_, array1: List[b_], array2: List[c_]) -> a_:
-    acc : a_ = state
+def fold_indexed2(folder: Any, state: __A, array1: Array[__B], array2: Array[__C]) -> __A:
+    acc : __A = state
     if len(array1) != len(array2):
         raise Exception("Arrays have different lengths")
-    
+
     for i in range(0, (len(array1) - 1) + 1, 1):
         acc = folder(i, acc, array1[i], array2[i])
     return acc
 
 
-def fold2(folder: Callable[[State, T1, T2], State], state: State, array1: List[T1], array2: List[T2]) -> State:
-    return fold_indexed2(lambda _arg1, acc, x, y=None, folder=folder, state=state, array1=array1, array2=array2: folder(acc, x, y), state, array1, array2)
+def fold2(folder: Any, state: _STATE, array1: Array[_T1], array2: Array[_T2]) -> _STATE:
+    def arrow_59(_arg: int, acc: _STATE, x: _T1, y: _T2, folder: Any=folder, state: _STATE=state, array1: Array[_T1]=array1, array2: Array[_T2]=array2) -> _STATE:
+        return folder(acc, x, y)
+
+    return fold_indexed2(arrow_59, state, array1, array2)
 
 
-def fold_back_indexed2(folder: Callable[[int, T1, T2, State], State], array1: List[T1], array2: List[T2], state: State=None) -> State:
-    acc : State = state
+def fold_back_indexed2(folder: Any, array1: Array[_T1], array2: Array[_T2], state: _STATE) -> _STATE:
+    acc : _STATE = state
     if len(array1) != len(array2):
         different_lengths()
-    
+
     size : int = len(array1) or 0
     for i in range(1, size + 1, 1):
         acc = folder(i - 1, array1[size - i], array2[size - i], acc)
     return acc
 
 
-def fold_back2(f: Callable[[T1, T2, State], State], array1: List[T1], array2: List[T2], state: State=None) -> State:
-    return fold_back_indexed2(lambda _arg1, x, y, acc=None, f=f, array1=array1, array2=array2, state=state: f(x, y, acc), array1, array2, state)
+def fold_back2(f: Any, array1: Array[_T1], array2: Array[_T2], state: _STATE) -> _STATE:
+    def arrow_60(_arg: int, x: _T1, y: _T2, acc: _STATE, f: Any=f, array1: Array[_T1]=array1, array2: Array[_T2]=array2, state: _STATE=state) -> _STATE:
+        return f(x, y, acc)
+
+    return fold_back_indexed2(arrow_60, array1, array2, state)
 
 
-def reduce(reduction: Callable[[T, T], T], array: List[T]) -> T:
+def reduce(reduction: Any, array: Array[_T]) -> _T:
     if len(array) == 0:
         raise Exception("The input array was empty")
-    
+
     return functools.reduce(reduction, array)
 
 
-def reduce_back(reduction: Callable[[T, T], T], array: List[T]) -> T:
+def reduce_back(reduction: Any, array: Array[_T]) -> _T:
     if len(array) == 0:
         raise Exception("The input array was empty")
-    
+
     return functools.reduce(reduction, array[::-1])
 
 
-def for_all2(predicate: Callable[[a_, b_], bool], array1: List[a_], array2: List[b_]) -> bool:
-    return fold2(lambda acc, x, y=None, predicate=predicate, array1=array1, array2=array2: predicate(x, y) if (acc) else (False), True, array1, array2)
+def for_all2(predicate: Any, array1: Array[__A], array2: Array[__B]) -> bool:
+    def arrow_61(acc: bool, x: __A, y: __B, predicate: Any=predicate, array1: Array[__A]=array1, array2: Array[__B]=array2) -> bool:
+        return predicate(x, y) if acc else False
+
+    return fold2(arrow_61, True, array1, array2)
 
 
-def exists_offset(predicate_mut: Callable[[T], bool], array_mut: List[T], index_mut: int) -> bool:
+def exists_offset(predicate_mut: Callable[[_T], bool], array_mut: Array[_T], index_mut: int) -> bool:
     while True:
         (predicate, array, index) = (predicate_mut, array_mut, index_mut)
         if index == len(array):
             return False
-        
+
         elif predicate(array[index]):
             return True
-        
+
         else: 
             predicate_mut = predicate
             array_mut = array
             index_mut = index + 1
             continue
-        
+
         break
 
 
-def exists(predicate: Callable[[a_], bool], array: List[a_]) -> bool:
+def exists(predicate: Callable[[__A], bool], array: Array[__A]) -> bool:
     return exists_offset(predicate, array, 0)
 
 
-def exists_offset2(predicate_mut: Callable[[a_, b_], bool], array1_mut: List[a_], array2_mut: List[b_], index_mut: int) -> bool:
+def exists_offset2(predicate_mut: Any, array1_mut: Array[__A], array2_mut: Array[__B], index_mut: int) -> bool:
     while True:
         (predicate, array1, array2, index) = (predicate_mut, array1_mut, array2_mut, index_mut)
         if index == len(array1):
             return False
-        
+
         elif predicate(array1[index], array2[index]):
             return True
-        
+
         else: 
             predicate_mut = predicate
             array1_mut = array1
             array2_mut = array2
             index_mut = index + 1
             continue
-        
+
         break
 
 
-def exists2(predicate: Callable[[a_, b_], bool], array1: List[a_], array2: List[b_]) -> bool:
+def exists2(predicate: Any, array1: Array[__A], array2: Array[__B]) -> bool:
     if len(array1) != len(array2):
         different_lengths()
-    
+
     return exists_offset2(predicate, array1, array2, 0)
 
 
-def sum(array: List[T], adder: Any) -> T:
-    acc : T = adder.GetZero()
+def sum(array: Array[_T], adder: IGenericAdder_1[_T]) -> _T:
+    acc : _T = adder.GetZero()
     for i in range(0, (len(array) - 1) + 1, 1):
         acc = adder.Add(acc, array[i])
     return acc
 
 
-def sum_by(projection: Callable[[T], T2], array: List[T], adder: Any) -> T2:
-    acc : T2 = adder.GetZero()
+def sum_by(projection: Callable[[_T], _T2], array: Array[_T], adder: IGenericAdder_1[_T2]) -> _T2:
+    acc : _T2 = adder.GetZero()
     for i in range(0, (len(array) - 1) + 1, 1):
         acc = adder.Add(acc, projection(array[i]))
     return acc
 
 
-def max_by(projection: Callable[[a], b], xs: List[a], comparer: Any) -> a:
-    return reduce(lambda x, y=None, projection=projection, xs=xs, comparer=comparer: y if (comparer.Compare(projection(y), projection(x)) > 0) else (x), xs)
+def max_by(projection: Callable[[_A], _B], xs: Array[_A], comparer: IComparer[_B]) -> _A:
+    def arrow_62(x: _A, y: _A, projection: Callable[[_A], _B]=projection, xs: Array[_A]=xs, comparer: IComparer[_B]=comparer) -> _A:
+        return y if (comparer.Compare(projection(y), projection(x)) > 0) else x
+
+    return reduce(arrow_62, xs)
 
 
-def max(xs: List[a], comparer: Any) -> a:
-    return reduce(lambda x, y=None, xs=xs, comparer=comparer: y if (comparer.Compare(y, x) > 0) else (x), xs)
+def max(xs: Array[_A], comparer: IComparer[_A]) -> _A:
+    def arrow_63(x: _A, y: _A, xs: Array[_A]=xs, comparer: IComparer[_A]=comparer) -> _A:
+        return y if (comparer.Compare(y, x) > 0) else x
+
+    return reduce(arrow_63, xs)
 
 
-def min_by(projection: Callable[[a], b], xs: List[a], comparer: Any) -> a:
-    return reduce(lambda x, y=None, projection=projection, xs=xs, comparer=comparer: x if (comparer.Compare(projection(y), projection(x)) > 0) else (y), xs)
+def min_by(projection: Callable[[_A], _B], xs: Array[_A], comparer: IComparer[_B]) -> _A:
+    def arrow_64(x: _A, y: _A, projection: Callable[[_A], _B]=projection, xs: Array[_A]=xs, comparer: IComparer[_B]=comparer) -> _A:
+        return x if (comparer.Compare(projection(y), projection(x)) > 0) else y
+
+    return reduce(arrow_64, xs)
 
 
-def min(xs: List[a], comparer: Any) -> a:
-    return reduce(lambda x, y=None, xs=xs, comparer=comparer: x if (comparer.Compare(y, x) > 0) else (y), xs)
+def min(xs: Array[_A], comparer: IComparer[_A]) -> _A:
+    def arrow_65(x: _A, y: _A, xs: Array[_A]=xs, comparer: IComparer[_A]=comparer) -> _A:
+        return x if (comparer.Compare(y, x) > 0) else y
+
+    return reduce(arrow_65, xs)
 
 
-def average(array: List[T], averager: Any) -> T:
+def average(array: Array[_T], averager: IGenericAverager_1[_T]) -> _T:
     if len(array) == 0:
         raise Exception("The input array was empty\\nParameter name: array")
-    
-    total : T = averager.GetZero()
+
+    total : _T = averager.GetZero()
     for i in range(0, (len(array) - 1) + 1, 1):
         total = averager.Add(total, array[i])
     return averager.DivideByInt(total, len(array))
 
 
-def average_by(projection: Callable[[T], T2], array: List[T], averager: Any) -> T2:
+def average_by(projection: Callable[[_T], _T2], array: Array[_T], averager: IGenericAverager_1[_T2]) -> _T2:
     if len(array) == 0:
         raise Exception("The input array was empty\\nParameter name: array")
-    
-    total : T2 = averager.GetZero()
+
+    total : _T2 = averager.GetZero()
     for i in range(0, (len(array) - 1) + 1, 1):
         total = averager.Add(total, projection(array[i]))
     return averager.DivideByInt(total, len(array))
 
 
-def windowed(window_size: int, source: List[T]) -> List[List[T]]:
+def windowed(window_size: int, source: Array[_T]) -> Array[Array[_T]]:
     if window_size <= 0:
         raise Exception("windowSize must be positive")
-    
-    res = None
-    len_1 : int = max_1(lambda x, y, window_size=window_size, source=source: compare_primitives(x, y), 0, len(source) - window_size) or 0
+
+    res : Array[Array[_T]]
+    def arrow_66(x: int, y: int, window_size: int=window_size, source: Array[_T]=source) -> int:
+        return compare_primitives(x, y)
+
+    len_1 : int = max_1(arrow_66, 0, (len(source) - window_size) + 1) or 0
     res = [None]*len_1
     for i in range(window_size, len(source) + 1, 1):
         res[i - window_size] = source[i - window_size:(i - 1) + 1]
     return res
 
 
-def split_into(chunks: int, array: List[T]) -> List[List[T]]:
+def split_into(chunks: int, array: Array[_T]) -> Array[Array[_T]]:
     if chunks < 1:
         raise Exception("The input must be positive.\\nParameter name: chunks")
-    
+
     if len(array) == 0:
         return [[]]
-    
+
     else: 
-        result : List[List[T]] = []
-        chunks_1 : int = min_1(lambda x, y, chunks=chunks, array=array: compare_primitives(x, y), chunks, len(array)) or 0
+        result : Array[Array[_T]] = []
+        def arrow_67(x: int, y: int, chunks: int=chunks, array: Array[_T]=array) -> int:
+            return compare_primitives(x, y)
+
+        chunks_1 : int = min_1(arrow_67, chunks, len(array)) or 0
         min_chunk_size : int = (len(array) // chunks_1) or 0
         chunks_with_extra_item : int = (len(array) % chunks_1) or 0
         for i in range(0, (chunks_1 - 1) + 1, 1):
-            chunk_size : int = (min_chunk_size + 1 if (i < chunks_with_extra_item) else (min_chunk_size)) or 0
-            start : int = ((i * min_chunk_size) + min_1(lambda x_1, y_1, chunks=chunks, array=array: compare_primitives(x_1, y_1), chunks_with_extra_item, i)) or 0
-            ignore(result.append(array[start:start+chunk_size]))
+            chunk_size : int = ((min_chunk_size + 1) if (i < chunks_with_extra_item) else min_chunk_size) or 0
+            def arrow_68(x_1: int, y_1: int, chunks: int=chunks, array: Array[_T]=array) -> int:
+                return compare_primitives(x_1, y_1)
+
+            start : int = ((i * min_chunk_size) + min_1(arrow_68, chunks_with_extra_item, i)) or 0
+            slice : Array[_T] = array[start:start+chunk_size]
+            ignore(result.append(slice))
         return result
-    
 
 
-def transpose(arrays: Any, cons: Any) -> List[List[T]]:
-    arrays_1 : List[List[T]] = arrays if (isinstance(arrays, list)) else (list(arrays))
+
+def transpose(arrays: IEnumerable[Array[_T]], cons: Cons_1[_T]) -> Array[Array[_T]]:
+    arrays_1 : Array[Array[_T]] = arrays if (isinstance(arrays, list)) else (list(arrays))
     len_1 : int = len(arrays_1) or 0
     if len_1 == 0:
         return [None]*0
-    
+
     else: 
         len_inner : int = len(arrays_1[0]) or 0
-        if not for_all(lambda a, arrays=arrays, cons=cons: len(a) == len_inner, arrays_1):
+        def predicate(a: Array[_T], arrays: IEnumerable[Array[_T]]=arrays, cons: Cons_1[_T]=cons) -> bool:
+            return len(a) == len_inner
+
+        if not for_all(predicate, arrays_1):
             different_lengths()
-        
-        result : List[List[T]] = [None]*len_inner
+
+        result : Array[Array[_T]] = [None]*len_inner
         for i in range(0, (len_inner - 1) + 1, 1):
             result[i] = Helpers_allocateArrayFromCons(cons, len_1)
             for j in range(0, (len_1 - 1) + 1, 1):
                 result[i][j] = arrays_1[j][i]
         return result
-    
 
 
-def insert_at(index: int, y: T, xs: List[T]) -> List[T]:
+
+def insert_at(index: int, y: _T, xs: Array[_T]) -> Array[_T]:
     len_1 : int = len(xs) or 0
     if True if (index < 0) else (index > len_1):
         raise Exception((SR_indexOutOfBounds + "\\nParameter name: ") + "index")
-    
-    target : List[T] = [x for i, x in enumerate(xs) if i < (len_1 + 1)]
+
+    target : Array[_T] = [x for i, x in enumerate(list(xs)+[0]*((len_1 + 1)-len(xs))) if i < (len_1 + 1)]
     for i in range(0, (index - 1) + 1, 1):
         target[i] = xs[i]
     target[index] = y
@@ -1194,14 +1254,14 @@ def insert_at(index: int, y: T, xs: List[T]) -> List[T]:
     return target
 
 
-def insert_many_at(index: int, ys: Any, xs: List[T]) -> List[T]:
+def insert_many_at(index: int, ys: IEnumerable[_T], xs: Array[_T]) -> Array[_T]:
     len_1 : int = len(xs) or 0
     if True if (index < 0) else (index > len_1):
         raise Exception((SR_indexOutOfBounds + "\\nParameter name: ") + "index")
-    
-    ys_1 : List[T] = list(ys)
+
+    ys_1 : Array[_T] = list(ys)
     len2 : int = len(ys_1) or 0
-    target : List[T] = [x for i, x in enumerate(xs) if i < (len_1 + len2)]
+    target : Array[_T] = [x for i, x in enumerate(list(xs)+[0]*((len_1 + len2)-len(xs))) if i < (len_1 + len2)]
     for i in range(0, (index - 1) + 1, 1):
         target[i] = xs[i]
     for i_1 in range(0, (len2 - 1) + 1, 1):
@@ -1211,58 +1271,58 @@ def insert_many_at(index: int, ys: Any, xs: List[T]) -> List[T]:
     return target
 
 
-def remove_at(index: int, xs: List[T]) -> List[T]:
+def remove_at(index: int, xs: Array[_T]) -> Array[_T]:
     if True if (index < 0) else (index >= len(xs)):
         raise Exception((SR_indexOutOfBounds + "\\nParameter name: ") + "index")
-    
+
     i : int = -1
-    def predicate(_arg1: Any=None, index=index, xs=xs) -> bool:
+    def predicate(_arg: Optional[_T]=None, index: int=index, xs: Array[_T]=xs) -> bool:
         nonlocal i
         i = (i + 1) or 0
         return i != index
-    
+
     return filter(predicate, xs)
 
 
-def remove_many_at(index: int, count: int, xs: List[T]) -> List[T]:
+def remove_many_at(index: int, count: int, xs: Array[_T]) -> Array[_T]:
     i : int = -1
     status : int = -1
-    def predicate(_arg1: Any=None, index=index, count=count, xs=xs) -> bool:
+    def predicate(_arg: Optional[_T]=None, index: int=index, count: int=count, xs: Array[_T]=xs) -> bool:
         nonlocal i, status
         i = (i + 1) or 0
         if i == index:
             status = 0
             return False
-        
+
         elif i > index:
             if i < (index + count):
                 return False
-            
+
             else: 
                 status = 1
                 return True
-            
-        
+
+
         else: 
             return True
-        
-    
-    ys : List[T] = filter(predicate, xs)
-    status_1 : int = (1 if ((i + 1) == (index + count) if (status == 0) else (False)) else (status)) or 0
+
+
+    ys : Array[_T] = filter(predicate, xs)
+    status_1 : int = (1 if (((i + 1) == (index + count)) if (status == 0) else False) else status) or 0
     if status_1 < 1:
-        raise Exception((SR_indexOutOfBounds + "\\nParameter name: ") + ("index" if (status_1 < 0) else ("count")))
-    
+        raise Exception((SR_indexOutOfBounds + "\\nParameter name: ") + ("index" if (status_1 < 0) else "count"))
+
     return ys
 
 
-def update_at(index: int, y: T, xs: List[T]) -> List[T]:
+def update_at(index: int, y: _T, xs: Array[_T]) -> Array[_T]:
     len_1 : int = len(xs) or 0
     if True if (index < 0) else (index >= len_1):
         raise Exception((SR_indexOutOfBounds + "\\nParameter name: ") + "index")
-    
-    target : List[T] = [x for i, x in enumerate(xs) if i < len_1]
+
+    target : Array[_T] = [x for i, x in enumerate(list(xs)+[0]*(len_1-len(xs))) if i < len_1]
     for i in range(0, (len_1 - 1) + 1, 1):
-        target[i] = y if (i == index) else (xs[i])
+        target[i] = y if (i == index) else xs[i]
     return target
 
 

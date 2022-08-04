@@ -1,8 +1,8 @@
 from __future__ import annotations
-from typing import (Any, List)
+from typing import Any
 from .reflection import (TypeInfo, class_type)
-from .string import (join, is_null_or_empty, format, substring)
-from .types import to_string
+from .string import (join, is_null_or_empty, substring, format)
+from .types import (to_string, Array)
 from .util import (int32_to_string, clear)
 
 def expr_7() -> TypeInfo:
@@ -14,12 +14,12 @@ class StringBuilder:
         self.buf = []
         if not is_null_or_empty(value):
             (self.buf.append(value))
-        
-    
+
+
     def __str__(self) -> str:
         __ : StringBuilder = self
         return join("", __.buf)
-    
+
 
 StringBuilder_reflection = expr_7
 
@@ -44,6 +44,11 @@ def StringBuilder__Append_Z721C83C5(x: StringBuilder, s: str) -> StringBuilder:
     return x
 
 
+def StringBuilder__Append_487EF8FB(x: StringBuilder, s: str, start_index: int, count: int) -> StringBuilder:
+    (x.buf.append(substring(s, start_index, count)))
+    return x
+
+
 def StringBuilder__Append_244C7CD6(x: StringBuilder, c: str) -> StringBuilder:
     (x.buf.append(c))
     return x
@@ -64,12 +69,12 @@ def StringBuilder__Append_Z1FBCCD16(x: StringBuilder, o: bool) -> StringBuilder:
     return x
 
 
-def StringBuilder__Append_4E60E31B(x: StringBuilder, o: Any) -> StringBuilder:
+def StringBuilder__Append_4E60E31B(x: StringBuilder, o: Any=None) -> StringBuilder:
     (x.buf.append(to_string(o)))
     return x
 
 
-def StringBuilder__Append_695F1130(x: StringBuilder, cs: List[str]) -> StringBuilder:
+def StringBuilder__Append_695F1130(x: StringBuilder, cs: Array[str]) -> StringBuilder:
     (x.buf.append(''.join(cs)))
     return x
 
@@ -79,8 +84,13 @@ def StringBuilder__Append_43A65C09(x: StringBuilder, s: StringBuilder) -> String
     return x
 
 
-def StringBuilder__AppendFormat_433E080(x: StringBuilder, fmt: str, o: Any) -> StringBuilder:
+def StringBuilder__AppendFormat_433E080(x: StringBuilder, fmt: str, o: Any=None) -> StringBuilder:
     (x.buf.append(format(fmt, o)))
+    return x
+
+
+def StringBuilder__AppendFormat_Z696D8D1B(x: StringBuilder, provider: IFormatProvider, fmt: str, o: Any=None) -> StringBuilder:
+    (x.buf.append(format(provider, fmt, o)))
     return x
 
 

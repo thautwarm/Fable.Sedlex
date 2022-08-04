@@ -1,6 +1,6 @@
 import re
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Any, Match, Optional
 
 from .types import FSharpRef
 from .util import DateKind
@@ -13,11 +13,25 @@ def op_subtraction(x: datetime, y: datetime) -> timedelta:
 
 
 def create(
-    year: int, month: int, day: int, h: int = 0, m: int = 0, s: int = 0, ms: int = 0, kind: Optional[DateKind] = None
+    year: int,
+    month: int,
+    day: int,
+    h: int = 0,
+    m: int = 0,
+    s: int = 0,
+    ms: int = 0,
+    kind: Optional[DateKind] = None,
 ) -> datetime:
     if kind == DateKind.UTC:
         date = datetime(
-            year=year, month=month, day=day, hour=h, minute=m, second=s, microsecond=ms * 1000, tzinfo=timezone.utc
+            year=year,
+            month=month,
+            day=day,
+            hour=h,
+            minute=m,
+            second=s,
+            microsecond=ms * 1000,
+            tzinfo=timezone.utc,
         )
     else:
         date = datetime(year, month, day, h, m, s, ms * 1000)
@@ -29,16 +43,15 @@ def year(d: datetime) -> int:
     return d.year
 
 
-def date_to_string_with_custom_format(date: datetime, format: str, utc) -> str:
-    def match(m):
-        match = m.group()
-        m = match[:1]
-        print(match)
-
+def date_to_string_with_custom_format(date: datetime, format: str, utc: bool) -> str:
+    def match(match: Match[str]) -> str:
+        group = match.group()
+        m = group[:1]
         rep = None
+
         if m == "y":
             y = date.astimezone(timezone.utc).year if utc else date.year
-            rep = y % 100 if len(match) < 4 else y
+            rep = y % 100 if len(group) < 4 else y
         elif m == "M":
             rep = date.astimezone(timezone.utc).month if utc else date.month
         elif m == "H":
@@ -52,10 +65,9 @@ def date_to_string_with_custom_format(date: datetime, format: str, utc) -> str:
             rep = rep // 1000
 
         if rep:
-            return f"0{rep}" if (rep < 10 and len(match) > 1) else f"{rep}"
-        else:
-            return match
-        return ""
+            return f"0{rep}" if (rep < 10 and len(group) > 1) else f"{rep}"
+
+        return group
 
     ret = formatRegExp.sub(match, format)
     return ret
@@ -137,7 +149,9 @@ def date_to_string_with_kind(date: datetime, format: Optional[str] = None) -> st
         return date_to_string_with_custom_format(date, format, utc)
 
 
-def to_string(date: datetime, format: Optional[str] = None, provider=None) -> str:
+def to_string(
+    date: datetime, format: Optional[str] = None, provider: Optional[Any] = None
+) -> str:
     if date.tzinfo:
         return date_to_string_with_offset(date, format)
 
@@ -178,7 +192,7 @@ def min_value() -> datetime:
     return datetime.min
 
 
-def op_addition(x: datetime, y: datetime) -> datetime:
+def op_addition(x: datetime, y: timedelta) -> datetime:
     return x + y
 
 
@@ -188,7 +202,9 @@ def parse(string: str, detectUTC: bool = False) -> datetime:
     return parser.parse(string)
 
 
-def try_parse(string: str, style: int, unsigned: bool, bitsize: int, defValue: FSharpRef[datetime]) -> bool:
+def try_parse(
+    string: str, style: int, unsigned: bool, bitsize: int, defValue: FSharpRef[datetime]
+) -> bool:
     try:
         defValue.contents = parse(string)
         return True

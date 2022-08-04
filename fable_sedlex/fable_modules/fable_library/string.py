@@ -1,24 +1,41 @@
-from argparse import ArgumentError
-import re
 import locale
-from base64 import b64encode, b64decode
+import re
 from abc import ABC
+from base64 import b64decode, b64encode
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable, Iterable, Match, NoReturn, Optional, Pattern, Union, TypeVar, overload, List
-from enum import Enum
+from enum import IntEnum
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Match,
+    NoReturn,
+    Optional,
+    Pattern,
+    TypeVar,
+    Union,
+    overload,
+)
 
-from .numeric import to_fixed, to_precision, to_exponential, to_hex, multiply
-from .types import to_string
 from .date import to_string as date_to_string
+from .numeric import multiply, to_exponential, to_fixed, to_hex, to_precision
 from .reg_exp import escape
+from .types import to_string
 
 T = TypeVar("T")
 
 
-fsFormatRegExp: Pattern[str] = re.compile(r"(^|[^%])%([0+\- ]*)(\d+)?(?:\.(\d+))?(\w)")
-interpolate_regexp: Pattern[str] = re.compile(r"(?:(^|[^%])%([0+\- ]*)(\d+)?(?:\.(\d+))?(\w))?%P\(\)")
-format_regexp: Pattern[str] = re.compile(r"\{(\d+)(,-?\d+)?(?:\:([a-zA-Z])(\d{0,2})|\:(.+?))?\}")
+_fs_format_regexp: Pattern[str] = re.compile(
+    r"(^|[^%])%([0+\- ]*)(\d+)?(?:\.(\d+))?(\w)"
+)
+_interpolate_regexp: Pattern[str] = re.compile(
+    r"(?:(^|[^%])%([0+\- ]*)(\d+)?(?:\.(\d+))?(\w))?%P\(\)"
+)
+_format_regexp: Pattern[str] = re.compile(
+    r"\{(\d+)(,-?\d+)?(?:\:([a-zA-Z])(\d{0,2})|\:(.+?))?\}"
+)
 
 
 IPrintfFormatContinuation = Callable[[Callable[[str], Any]], Callable[[str], Any]]
@@ -56,7 +73,7 @@ def to_console_error(arg: Union[IPrintfFormat, str]):
 
 # Set return to `Any` since `Union[str, Callable]` will make type
 # checkers really unhappy.
-def to_text(arg: Union[IPrintfFormat, str]) -> Any:
+def to_text(arg: Union[IPrintfFormat, str]) -> Union[str, Callable[..., Any]]:
     cont: Callable[[str], Any] = lambda x: x
     return continue_print(cont, arg)
 
@@ -68,7 +85,9 @@ def to_fail(arg: Union[IPrintfFormat, str]):
     return continue_print(fail, arg)
 
 
-def format_replacement(rep: Any, flags: Any, padLength: Any, precision: Any, format: Any):
+def format_replacement(
+    rep: Any, flags: Any, padLength: Any, precision: Any, format: Any
+):
     sign = ""
     flags = flags or ""
     format = format or ""
@@ -85,20 +104,28 @@ def format_replacement(rep: Any, flags: Any, padLength: Any, precision: Any, for
                     sign = "+"
 
         elif format == "x":
-            rep = to_hex(rep)
+            rep = to_hex(int(rep))
         elif format == "X":
-            rep = to_hex(rep).upper()
+            rep = to_hex(int(rep)).upper()
 
         precision = None if precision is None else int(precision)
         if format in ("f", "F"):
             precision = precision if precision is not None else 6
             rep = to_fixed(rep, precision)
         elif format in ("g", "G"):
-            rep = to_precision(rep, precision) if precision is not None else to_precision(rep)
+            rep = (
+                to_precision(rep, precision)
+                if precision is not None
+                else to_precision(rep)
+            )
         elif format in ("e", "E"):
-            rep = to_exponential(rep, precision) if precision is not None else to_exponential(rep)
+            rep = (
+                to_exponential(rep, precision)
+                if precision is not None
+                else to_exponential(rep)
+            )
         else:  # AOid
-            rep = str(rep)
+            rep = to_string(rep)
 
     elif isinstance(rep, datetime):
         rep = date_to_string(rep)
@@ -122,11 +149,11 @@ def format_replacement(rep: Any, flags: Any, padLength: Any, precision: Any, for
     return rep
 
 
-def interpolate(string: str, values: Any) -> str:
+def interpolate(string: str, values: List[Any]) -> str:
     valIdx = 0
     strIdx = 0
     result = ""
-    matches = interpolate_regexp.finditer(string)
+    matches = _interpolate_regexp.finditer(string)
     for match in matches:
         # The first group corresponds to the no-escape char (^|[^%]), the actual pattern starts in the next char
         # Note: we don't use negative lookbehind because some browsers don't support it yet
@@ -134,7 +161,9 @@ def interpolate(string: str, values: Any) -> str:
         result += string[strIdx:matchIndex].replace("%%", "%")
         [_, flags, padLength, precision, format] = match.groups()
         # print(match.groups())
-        result += format_replacement(values[valIdx], flags, padLength, precision, format)
+        result += format_replacement(
+            values[valIdx], flags, padLength, precision, format
+        )
         valIdx += 1
 
         strIdx = match.end()
@@ -149,7 +178,7 @@ def format_once(str2: str, rep: Any):
         once: str = format_replacement(rep, flags, padLength, precision, format)
         return prefix + once.replace("%", "%%")
 
-    ret = fsFormatRegExp.sub(match, str2, count=1)
+    ret = _fs_format_regexp.sub(match, str2, count=1)
     return ret
 
 
@@ -159,7 +188,7 @@ def create_printer(string: str, cont: Callable[..., Any]):
         for arg in args:
             strCopy = format_once(strCopy, arg)
 
-        if fsFormatRegExp.search(strCopy):
+        if _fs_format_regexp.search(strCopy):
             return create_printer(strCopy, cont)
         return cont(strCopy.replace("%%", "%"))
 
@@ -168,7 +197,7 @@ def create_printer(string: str, cont: Callable[..., Any]):
 
 def fs_format(str: str):
     def _(cont: Callable[..., Any]):
-        if fsFormatRegExp.search(str):
+        if _fs_format_regexp.search(str):
             return create_printer(str, cont)
         return cont(str)
 
@@ -176,6 +205,11 @@ def fs_format(str: str):
 
 
 def format(string: str, *args: Any) -> str:
+    if not string and args:
+        # Called with culture info
+        string = args[0]
+        args = args[1:]
+
     def match(m: Match[str]) -> str:
         idx, padLength, format, precision_, pattern = list(m.groups())
         rep = args[int(idx)]
@@ -191,20 +225,36 @@ def format(string: str, *args: Any) -> str:
                 rep = to_fixed(rep, precision)
 
             elif format in ["g", "G"]:
-                rep = to_precision(rep, precision) if precision is not None else to_precision(rep)
+                rep = (
+                    to_precision(rep, precision)
+                    if precision is not None
+                    else to_precision(rep)
+                )
 
             elif format in ["e", "E"]:
-                rep = to_exponential(rep, precision) if precision is not None else to_exponential(rep)
+                rep = (
+                    to_exponential(rep, precision)
+                    if precision is not None
+                    else to_exponential(rep)
+                )
 
             elif format in ["p", "P"]:
                 precision = precision if precision is not None else 2
                 rep = to_fixed(multiply(rep, 100), precision) + " %"
 
             elif format in ["d", "D"]:
-                rep = pad_left(str(rep), precision, "0") if precision is not None else str(rep)
+                rep = (
+                    pad_left(str(rep), precision, "0")
+                    if precision is not None
+                    else str(rep)
+                )
 
             elif format in ["x", "X"]:
-                rep = pad_left(to_hex(rep), precision, "0") if precision is not None else to_hex(rep)
+                rep = (
+                    pad_left(to_hex(rep), precision, "0")
+                    if precision is not None
+                    else to_hex(rep)
+                )
                 if format == "X":
                     rep = rep.upper()
             elif pattern:
@@ -219,7 +269,13 @@ def format(string: str, *args: Any) -> str:
                         sign = "-"
 
                     rep = to_fixed(rep, len(decimalPart) - 1 if decimalPart else 0)
-                    return pad_left(rep, len(intPart or "") - len(sign) + (len(decimalPart) if decimalPart else 0), "0")
+                    return pad_left(
+                        rep,
+                        len(intPart or "")
+                        - len(sign)
+                        + (len(decimalPart) if decimalPart else 0),
+                        "0",
+                    )
 
                 rep = re.sub(r"(0+)(\.0+)?", match, pattern)
                 rep = sign + rep
@@ -237,23 +293,21 @@ def format(string: str, *args: Any) -> str:
 
         return str(rep)
 
-    return format_regexp.sub(match, string)
+    return _format_regexp.sub(match, string)
 
 
 def initialize(n: int, f: Callable[[int], str]) -> str:
     if n < 0:
         raise Exception("String length must be non-negative")
 
-    xs = [""] * n
-    for i in range(n):
-        xs[i] = f(i)
-
-    return "".join(xs)
+    return "".join([f(i) for i in range(n)])
 
 
 def insert(string: str, startIndex: int, value: str):
     if startIndex < 0 or startIndex > len(string):
-        raise ValueError("startIndex is negative or greater than the length of this instance.")
+        raise ValueError(
+            "startIndex is negative or greater than the length of this instance."
+        )
 
     return string[:startIndex] + value + string[startIndex:]
 
@@ -283,7 +337,9 @@ def join_with_indices(delimiter: str, xs: List[str], startIndex: int, count: int
 
 
 def not_supported(name: str) -> NoReturn:
-    raise Exception("The environment doesn't support '" + name + "', please use a polyfill.")
+    raise Exception(
+        "The environment doesn't support '" + name + "', please use a polyfill."
+    )
 
 
 def to_base64string(in_array: bytes) -> str:
@@ -294,10 +350,12 @@ def from_base64string(b64encoded: str) -> bytes:
     return b64decode(b64encoded)
 
 
-def pad_left(string: str, length: int, ch: Optional[str] = None, isRight: Optional[bool] = False) -> str:
+def pad_left(
+    string: str, length: int, ch: Optional[str] = None, isRight: Optional[bool] = False
+) -> str:
     ch = ch or " "
     length = length - len(string)
-    for i in range(length):
+    for _ in range(length):
         string = string + ch if isRight else ch + string
 
     return string
@@ -314,7 +372,9 @@ def remove(string: str, startIndex: int, count: Optional[int] = None):
     if count and (startIndex + count) > len(string):
         raise ValueError("Index and count must refer to a location within the string.")
 
-    return string[:startIndex] + (string[startIndex + count :] if count is not None else "")
+    return string[:startIndex] + (
+        string[startIndex + count :] if count is not None else ""
+    )
 
 
 def replace(string: str, search: str, replace: str):
@@ -332,7 +392,12 @@ def get_char_at_index(input: str, index: int):
     return input[index]
 
 
-def split(string: str, splitters: Union[str, List[str]], count: Optional[int] = None, removeEmpty: int = 0):
+def split(
+    string: str,
+    splitters: Union[str, List[str]],
+    count: Optional[int] = None,
+    removeEmpty: int = 0,
+) -> List[str]:
     """Split string
 
     Returns a string array that contains the substrings in this instance
@@ -354,7 +419,7 @@ def split(string: str, splitters: Union[str, List[str]], count: Optional[int] = 
     splitters = [escape(x) for x in splitters] or [" "]
 
     i = 0
-    splits = []
+    splits: List[str] = []
     matches = re.finditer("|".join(splitters), string)
     for m in matches:
         if count is not None and count <= 1:
@@ -376,7 +441,7 @@ def split(string: str, splitters: Union[str, List[str]], count: Optional[int] = 
     return splits
 
 
-def trim(string: str, *chars: str):
+def trim(string: str, *chars: str) -> str:
     if not len(chars):
         return string.strip()
 
@@ -384,21 +449,21 @@ def trim(string: str, *chars: str):
     return re.sub(pattern + "$", "", re.sub("^" + pattern, "", string))
 
 
-def trim_start(string: str, *chars: str):
+def trim_start(string: str, *chars: str) -> str:
     if not len(chars):
         return string.lstrip()
 
     return re.sub("^[" + escape("".join(chars)) + "]+", "", string)
 
 
-def trim_end(string: str, *chars: str):
+def trim_end(string: str, *chars: str) -> str:
     if not len(chars):
         return string.rstrip()
 
     return re.sub("[" + escape("".join(chars)) + "]+$", "", string)
 
 
-def filter(pred: Callable[[str], bool], x: str):
+def filter(pred: Callable[[str], bool], x: str) -> str:
     return "".join(c for c in x if pred(c))
 
 
@@ -412,7 +477,7 @@ def substring(string: str, startIndex: int, length: Optional[int] = None) -> str
     return string[startIndex:]
 
 
-class StringComparison(Enum):
+class StringComparison(IntEnum):
     CurrentCulture = 0
     CurrentCultureIgnoreCase = 1
     InvariantCulture = 2
@@ -425,13 +490,13 @@ def cmp(x: str, y: str, ic: Union[bool, StringComparison]) -> int:
     def is_ignore_case(i: Union[bool, StringComparison]) -> bool:
         return (
             i is True
-            or i == StringComparison.CurrentCultureIgnoreCase.value
-            or i == StringComparison.InvariantCultureIgnoreCase.value
-            or i == StringComparison.OrdinalIgnoreCase.value
+            or i == StringComparison.CurrentCultureIgnoreCase
+            or i == StringComparison.InvariantCultureIgnoreCase
+            or i == StringComparison.OrdinalIgnoreCase
         )
 
-    def is_ordinal(i: Union[bool, StringComparison]) -> bool:
-        return i == StringComparison.Ordinal.value or i == StringComparison.OrdinalIgnoreCase.value
+    def is_ordinal(i: Union[bool, int]) -> bool:
+        return i == StringComparison.Ordinal or i == StringComparison.OrdinalIgnoreCase
 
     if not x:
         return 0 if not y else -1
@@ -452,14 +517,16 @@ def cmp(x: str, y: str, ic: Union[bool, StringComparison]) -> int:
 
 
 @overload
-def compare(__string1: str, __string2: str) -> int:
+def compare(string1: str, string2: str, /) -> int:
     """Compares two specified String objects and returns an integer that
     indicates their relative position in the sort order."""
     ...
 
 
 @overload
-def compare(__string1: str, __string2: str, ignore_case: bool, culture: StringComparison) -> int:
+def compare(
+    string1: str, string2: str, ignore_case: bool, culture: StringComparison, /
+) -> int:
     ...
 
 
@@ -490,11 +557,17 @@ def compare(*args: Any) -> int:
     if length == 4:
         return cmp(args[0], args[1], args[2])
     if length == 5:
-        return cmp(args[0][args[1] : args[4] + 1], args[2][args[3] : args[4] + 1], False)
+        return cmp(
+            args[0][args[1] : args[4] + 1], args[2][args[3] : args[4] + 1], False
+        )
     if length == 6:
-        return cmp(args[0][args[1] : args[4] + 1], args[2][args[3] : args[4] + 1], args[5])
+        return cmp(
+            args[0][args[1] : args[4] + 1], args[2][args[3] : args[4] + 1], args[5]
+        )
     if length == 7:
-        return cmp(args[0][args[1] : args[4] + 1], args[2][args[3] : args[4] + 1], args[5])
+        return cmp(
+            args[0][args[1] : args[4] + 1], args[2][args[3] : args[4] + 1], args[5]
+        )
     raise Exception("String.compare: Unsupported number of parameters")
 
 

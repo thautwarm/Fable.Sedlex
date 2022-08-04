@@ -1,56 +1,67 @@
 from __future__ import annotations
 
-from abc import abstractstaticmethod
-from typing import Any, Callable, Generic, Iterable, List, Optional, Tuple, TypeVar
+import array
+from abc import abstractmethod
+from typing import (
+    Any,
+    ByteString,
+    Callable,
+    Generic,
+    Iterable,
+    List,
+    MutableSequence,
+    Optional,
+    TypeVar,
+)
 from typing import Union as Union_
 from typing import cast
-import array
 
-from .util import IComparable, equals
+from .util import IComparable, compare
 
-T = TypeVar("T")
+_T = TypeVar("_T")
 
 
-class FSharpRef(Generic[T]):
-    def __init__(self, contentsOrGetter: Union_[T, Callable[[], T]], setter: Optional[Callable[[T], None]] = None) -> None:
+class FSharpRef(Generic[_T]):
+    def __init__(
+        self,
+        contents_or_getter: Union_[None, _T, Callable[[], _T]],
+        setter: Optional[Callable[[_T], None]] = None,
+    ) -> None:
+        contents = cast(_T, contents_or_getter)
 
-        contents = contentsOrGetter
-
-        def set_contents(value: T):
+        def set_contents(value: _T):
             nonlocal contents
             contents = value
 
         if callable(setter):
-            self.getter = contentsOrGetter
+            self.getter = cast(Callable[[], _T], contents_or_getter)
             self.setter = setter
         else:
             self.getter = lambda: contents
             self.setter = set_contents
 
     @property
-    def contents(self) -> T:
+    def contents(self) -> _T:
         return self.getter()
 
     @contents.setter
-    def contents(self, v) -> None:
+    def contents(self, v: _T) -> None:
         self.setter(v)
 
 
 class Union(IComparable):
     def __init__(self):
         self.tag: int
-        self.fields: Tuple[int, ...] = ()
+        self.fields: List[Any] = []
 
-    @abstractstaticmethod
+    @staticmethod
+    @abstractmethod
     def cases() -> List[str]:
         ...
 
     @property
     def name(self) -> str:
         return self.cases()[self.tag]
-
-    def to_JSON(self) -> str:
-        raise NotImplementedError
 
     def __str__(self) -> str:
         if not len(self.fields):
@@ -65,7 +76,12 @@ class Union(IComparable):
         else:
             fields = ", ".join(map(str, self.fields))
 
-        return self.name + (" (" if with_parens else " ") + fields + (")" if with_parens else "")
+        return (
+            self.name
+            + (" (" if with_parens else " ")
+            + fields
+            + (")" if with_parens else "")
+        )
 
     def __repr__(self) -> str:
         return str(self)
@@ -77,7 +93,12 @@ class Union(IComparable):
     def __eq__(self, other: Any) -> bool:
         if self is other:
             return True
+
         if not isinstance(other, Union):
+            return False
+
+        # Different objects are not equal even with same structure
+        if self.__class__ != other.__class__:
             return False
 
         if self.tag == other.tag:
@@ -87,46 +108,73 @@ class Union(IComparable):
 
     def __lt__(self, other: Any) -> bool:
         if self.tag == other.tag:
-            return self.fields < other.fields
+            return True if compare(self.fields, other.fields) < 0 else False
 
         return self.tag < other.tag
 
 
-def record_equals(self: Record, other: Record) -> bool:
-    if self is other:
-        return True
-
-    a = self.__dict__ if hasattr(self, "__dict__") else self
-    b = other.__dict__ if hasattr(other, "__dict__") else other
-
-    return a == b
-
-
-def record_compare_to(self: Record, other: Record):
+def record_compare_to(self: Record, other: Record) -> int:
     if self is other:
         return 0
 
-    else:
+    elif hasattr(self, "__dict__") and self.__dict__:
         for name in self.__dict__.keys():
             if self.__dict__[name] < other.__dict__.get(name):
                 return -1
             elif self.__dict__[name] > other.__dict__.get(name):
                 return 1
 
-        return 0
+    elif hasattr(self, "__slots__") and self.__slots__:
+        for name in self.__slots__:
+            if getattr(self, name) < getattr(other, name):
+                return -1
+            elif getattr(self, name) > getattr(other, name):
+                return 1
+
+    return 0
+
+
+def record_equals(self: _T, other: _T) -> bool:
+    if self is other:
+        return True
+
+    if self.__class__ != other.__class__:
+        return False
+
+    if isinstance(self, Record) and isinstance(other, Record):
+        return record_compare_to(self, other) == 0
+
+    return self == other
 
 
 def record_to_string(self: Record) -> str:
-    return "{ " + "\n  ".join(map(lambda kv: kv[0] + " = " + str(kv[1]), self.__dict__.items())) + " }"
+    if hasattr(self, "__slots__"):
+        return (
+            "{ "
+            + "\n  ".join(
+                map(
+                    lambda slot: slot + " = " + str(getattr(self, slot)), self.__slots__
+                )
+            )
+            + " }"
+        )
+    else:
+        return (
+            "{ "
+            + "\n  ".join(
+                map(lambda kv: kv[0] + " = " + str(kv[1]), self.__dict__.items())
+            )
+            + " }"
+        )
 
 
-def recordGetHashCode(self):
-    return hash(*self.values())
+def record_get_hashcode(self: Record) -> int:
+    slots = type(self).__slots__
+    return hash(tuple(getattr(self, fixed_field) for fixed_field in slots))
 
 
 class Record(IComparable):
-    # def toJSON(self) -> str:
-    #    return record_to_JSON(self)
+    __slots__: List[str]
 
     def __str__(self) -> str:
         return record_to_string(self)
@@ -135,7 +183,7 @@ class Record(IComparable):
         return str(self)
 
     def GetHashCode(self) -> int:
-        return recordGetHashCode(self)
+        return record_get_hashcode(self)
 
     def Equals(self, other: Record) -> bool:
         return record_equals(self, other)
@@ -150,7 +198,7 @@ class Record(IComparable):
         return self.Equals(other)
 
     def __hash__(self) -> int:
-        return recordGetHashCode(self)
+        return record_get_hashcode(self)
 
 
 class Attribute:
@@ -174,26 +222,19 @@ def seq_to_string(self: Iterable[Any]) -> str:
     return str + "]"
 
 
-def to_string(x: Any, callStack: int = 0) -> str:
+def to_string(x: Union_[Iterable[Any], Any], call_stack: int = 0) -> str:
     if x is not None:
-        # if (typeof x.toString === "function") {
-        #    return x.toString();
+        if isinstance(x, bool):
+            return str(x).lower()
 
         if isinstance(x, Iterable) and not hasattr(x, "__str__"):
             return seq_to_string(x)
-
-        # else: // TODO: Date?
-        #     const cons = Object.getPrototypeOf(x).constructor;
-        #     return cons === Object && callStack < 10
-        #         // Same format as recordToString
-        #         ? "{ " + Object.entries(x).map(([k, v]) => k + " = " + toString(v, callStack + 1)).join("\n  ") + " }"
-        #         : cons.name;
 
     return str(x)
 
 
 class Exception(Exception):
-    def __init__(self, msg: Optional[str] = None):
+    def __init__(self, msg: str = "") -> None:
         self.msg = msg
 
     def __eq__(self, other: Any) -> bool:
@@ -205,16 +246,16 @@ class Exception(Exception):
 
         return self.msg == other.msg
 
+    def __str__(self) -> str:
+        return self.msg
+
 
 class FSharpException(Exception, IComparable):
-    def __init__(self):
+    def __init__(self) -> None:
         self.Data0: Any = None
 
-    # def toJSON(self):
-    #    return record_to_JSON(self)
-
-    def __str__(self):
-        return record_to_string(self)
+    def __str__(self) -> str:
+        return record_to_string(self)  # type: ignore
 
     def __repr__(self) -> str:
         return str(self)
@@ -250,13 +291,13 @@ class FSharpException(Exception, IComparable):
         return hash(self.Data0)
 
     def GetHashCode(self) -> int:
-        return recordGetHashCode(self)
+        return hash(self)
 
     def Equals(self, other: FSharpException):
         return record_equals(self, other)
 
     def CompareTo(self, other: FSharpException):
-        return record_compare_to(self, other)
+        return compare(self.Data0, other.Data0)
 
 
 def Int8Array(lst: List[int]):
@@ -279,16 +320,42 @@ def Int32Array(lst: List[int]):
     return array.array("i", lst)
 
 
-def Uint32Array(lst: List[int]):
+def Uint32Array(lst: List[int]) -> MutableSequence[int]:
     return array.array("I", lst)
 
 
-def Float32Array(lst: List[float]):
+def Float32Array(lst: List[float]) -> MutableSequence[float]:
     return array.array("f", lst)
 
 
-def Float64Array(lst: List[float]):
+def Float64Array(lst: List[float]) -> MutableSequence[float]:
     return array.array("d", lst)
 
 
-__all__ = ["Attribute", "Exception", "FSharpException", "FSharpRef", "Record", "seq_to_string", "to_string", "Union"]
+Array = Union_[List[_T], MutableSequence[_T], ByteString]
+
+
+def is_exception(x: Any):
+    return isinstance(x, Exception)
+
+
+__all__ = [
+    "Attribute",
+    "Array",
+    "Exception",
+    "is_exception",
+    "Int8Array",
+    "Uint8Array",
+    "Int16Array",
+    "Uint16Array",
+    "Int32Array",
+    "Uint32Array",
+    "Float32Array",
+    "Float64Array",
+    "FSharpException",
+    "FSharpRef",
+    "Record",
+    "seq_to_string",
+    "to_string",
+    "Union",
+]
