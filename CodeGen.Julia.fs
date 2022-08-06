@@ -162,7 +162,7 @@ let codegen_julia (import_head: string) (cu: compiled_unit) =
             empty;
             word "struct Token";
             vsep [
-                word "token_id::Int32";
+                word "idint::Int32";  // frontend-for-free specific
                 word "lexeme::String";
                 word "line::Int32"
                 word "col::Int32"
