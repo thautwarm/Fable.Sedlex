@@ -169,6 +169,7 @@ let codegen_julia (import_head: string) (cu: compiled_unit) =
                 word "span::Int32"
                 word "offset::Int32"
                 word "file::String"
+                word "Token(token_id, src, line, col, span, offset, file) = new(token_id, sedlex_lexeme(src), line, col, span, offset, file)"
             ] >>> 4
             word "end"
             empty;
@@ -181,7 +182,7 @@ let codegen_julia (import_head: string) (cu: compiled_unit) =
                 word "token_id == nothing" + word "&&" + word "return nothing";
                 word "return" + word "construct_token" * parens ( seplist (word ", ") [
                     word "token_id";
-                    word "sedlex_lexeme(lexerbuf)";
+                    word "lexerbuf";
                     word "lexerbuf.start_line";
                     word "lexerbuf.pos - lexerbuf.curr_bol";
                     word "lexerbuf.pos - lexerbuf.start_pos";
@@ -193,7 +194,7 @@ let codegen_julia (import_head: string) (cu: compiled_unit) =
             empty;
             word "function lexall(construct_token, buf::lexbuf, is_eof #= Token -> Bool =#)";
             vsep [
-                word "Channel{Token}() do coro"
+                word "Channel() do coro"
                 vsep [
                     word "while true";
                     vsep [

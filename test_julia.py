@@ -33,5 +33,5 @@ is_eof(x) = x.token_id == 0
 """
 code = codegen_julia(header, cu)
 
-with open("julia-rts/Sedlex/test/generated.jl", 'w', encoding='utf8') as f:
+with open("generated.jl", 'w', encoding='utf8') as f:
     f.write(show_doc(code))

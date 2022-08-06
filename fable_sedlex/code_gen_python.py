@@ -132,14 +132,14 @@ def codegen_python(import_head: str, cu: compiled_unit) -> Doc:
                 names = cons(name_1, names)
             names_1 : FSharpList[str] = reverse(names)
             func_table : str = new_rnd_name()
-            def arrow_15(lang: lang_3=lang) -> Doc:
-                def arrow_13(s_2: str) -> Doc:
+            def arrow_16(lang: lang_3=lang) -> Doc:
+                def arrow_14(s_2: str) -> Doc:
                     return word(s_2)
 
-                lst_1 : FSharpList[Doc] = map_1(arrow_13, names_1)
+                lst_1 : FSharpList[Doc] = map_1(arrow_14, names_1)
                 return seplist(word(", "), lst_1)
 
-            push_later_toplevel(Doc_op_Addition_Z492644C0(Doc_op_Addition_Z492644C0(word(func_table), word("=")), bracket(arrow_15())))
+            push_later_toplevel(Doc_op_Addition_Z492644C0(Doc_op_Addition_Z492644C0(word(func_table), word("=")), bracket(arrow_16())))
             default_body : Doc = _cg_state_func(lang.fields[2])
             test : Doc = Doc_op_Multiply_Z492644C0(word(cg_decision_func(lang.fields[0])), parens(word("public_next_int(lexerbuf)")))
             return vsep(of_array([Doc_op_Addition_Z492644C0(Doc_op_Addition_Z492644C0(word("state_id"), word("=")), test), Doc_op_Addition_Z492644C0(word("if"), Doc_op_Multiply_Z492644C0(word(to_text(printf("state_id >= 0"))), word(":"))), Doc_op_RightShift_1E15AFA6(vsep(singleton(Doc_op_Addition_Z492644C0(Doc_op_Addition_Z492644C0(word("result"), word("=")), Doc_op_Multiply_Z492644C0(word(to_text(printf("%s[state_id]"))(func_table)), parens(word("lexerbuf")))))), 4), word("else:"), Doc_op_RightShift_1E15AFA6(default_body, 4)]))
@@ -155,10 +155,10 @@ def codegen_python(import_head: str, cu: compiled_unit) -> Doc:
         pattern_input : Tuple[Array[keep_token], str] = cu.lex_code
         error_msg_1 : str = ("\"" + replace(pattern_input[1], "\"", "\\\"")) + "\""
         initial_state_fun : str = st_func_name(0)
-        def arrow_17(_arg: keep_token) -> Doc:
+        def arrow_19(_arg: keep_token) -> Doc:
             return pretty(_arg.fields[0]) if (_arg.tag == 1) else word("None")
 
-        token_ids : FSharpList[Doc] = of_array(map_2(arrow_17, pattern_input[0], None))
+        token_ids : FSharpList[Doc] = of_array(map_2(arrow_19, pattern_input[0], None))
         construct_table : Doc = Doc_op_Addition_Z492644C0(Doc_op_Addition_Z492644C0(Doc_op_Addition_Z492644C0(word("["), seplist(word(", "), token_ids)), word("]")), word(" # token_ids"))
         table_name : str = new_rnd_name()
         push_toplevel(Doc_op_Addition_Z492644C0(Doc_op_Addition_Z492644C0(word(table_name), word("=")), construct_table))

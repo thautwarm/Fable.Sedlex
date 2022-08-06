@@ -14,7 +14,7 @@ __A = TypeVar("__A")
 
 _A = TypeVar("_A")
 
-def expr_0() -> TypeInfo:
+def expr_2() -> TypeInfo:
     return union_type("Fable.Sedlex.PrettyDoc.Doc", [], Doc, lambda: [[("Item1", Doc_reflection()), ("Item2", Doc_reflection())], [("Item", list_type(Doc_reflection()))], [("Item", Doc_reflection())], [("Item1", int32_type), ("Item2", Doc_reflection())], [("Item", string_type)], []])
 
 
@@ -29,7 +29,7 @@ class Doc(Union):
         return ["Concat", "VSep", "Align", "Indent", "Segment", "Empty"]
 
 
-Doc_reflection = expr_0
+Doc_reflection = expr_2
 
 def Doc_op_Multiply_Z492644C0(a: Doc, b: Doc) -> Doc:
     return Doc(0, a, b)
@@ -43,7 +43,7 @@ def Doc_op_RightShift_1E15AFA6(a: Doc, b: int) -> Doc:
     return Doc(3, b, a)
 
 
-def expr_3() -> TypeInfo:
+def expr_5() -> TypeInfo:
     return union_type("Fable.Sedlex.PrettyDoc.DocPrimitive", [], DocPrimitive, lambda: [[], [], [("Item", int32_type)], [("Item", string_type)]])
 
 
@@ -58,7 +58,7 @@ class DocPrimitive(Union):
         return ["DP_PopIndent", "DP_PushCurrentIndent", "DP_PushIndent", "DP_Word"]
 
 
-DocPrimitive_reflection = expr_3
+DocPrimitive_reflection = expr_5
 
 def Array_drop(i: int, arr: Array[__A]) -> Array[__A]:
     return take(len(arr) - i, arr, None)
@@ -115,7 +115,7 @@ def compile_to_prims(doc: Doc) -> Array[Array[DocPrimitive]]:
 
 
 
-def expr_16(gen0: TypeInfo) -> TypeInfo:
+def expr_13(gen0: TypeInfo) -> TypeInfo:
     return class_type("Fable.Sedlex.PrettyDoc.Stack`1", [gen0], Stack_1)
 
 
@@ -124,7 +124,7 @@ class Stack_1(Generic[_A]):
         self._content = to_list(init) if (init is not None) else empty_1()
 
 
-Stack_1_reflection = expr_16
+Stack_1_reflection = expr_13
 
 def Stack_1__ctor_Z5E7FEA67(init: Optional[IEnumerable[_A]]=None) -> Stack_1[_A]:
     return Stack_1(init)
@@ -195,11 +195,11 @@ def render(setences: Array[Array[DocPrimitive]], write: Callable[[str], None]) -
 
 
 def pretty(s: Optional[__A]=None) -> Doc:
-    def arrow_18(s: __A=s) -> str:
+    def arrow_17(s: __A=s) -> str:
         copy_of_struct : __A = s
         return to_string(copy_of_struct)
 
-    return Doc(4, arrow_18())
+    return Doc(4, arrow_17())
 
 
 def seg(s: str) -> Doc:
@@ -266,10 +266,10 @@ def seplist(sep: Doc, lst: FSharpList[Doc]) -> Doc:
 
 def show_doc(doc: Doc) -> str:
     sb : Any = StringBuilder__ctor()
-    def arrow_19(x: str, doc: Doc=doc) -> None:
+    def arrow_20(x: str, doc: Doc=doc) -> None:
         ignore(StringBuilder__Append_Z721C83C5(sb, x))
 
-    render(compile_to_prims(doc), arrow_19)
+    render(compile_to_prims(doc), arrow_20)
     return to_string(sb)
 
 
